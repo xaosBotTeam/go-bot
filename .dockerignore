@@ -1,5 +1,6 @@
 .idea
 .git
 .vscode
+.env
 README.md
 build

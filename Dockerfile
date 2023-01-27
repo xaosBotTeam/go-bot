@@ -6,11 +6,12 @@ COPY go.sum ./
 
 RUN go mod download
 
-COPY * ./
+COPY . ./
 
 RUN go build -o xaosbot
 
-FROM scratch
+FROM alpine:3
 
-COPY --from=build /app/xaosbot /bin/xaosbot
-ENTRYPOINT [ "/bin/xaosbot" ]
+COPY --from=build /app/xaosbot /xaosbot
+
+ENTRYPOINT [ "/xaosbot" ]

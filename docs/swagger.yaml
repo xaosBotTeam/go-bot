@@ -1,0 +1,9 @@
+basePath: /
+host: localhost:5504
+info:
+  contact: {}
+  description: API for xaos.mobi bot
+  title: Go xaos.mobi bot
+  version: 0.0.0
+paths: {}
+swagger: "2.0"

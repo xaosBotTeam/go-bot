@@ -1,0 +1,12 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for xaos.mobi bot",
+        "title": "Go xaos.mobi bot",
+        "contact": {},
+        "version": "0.0.0"
+    },
+    "host": "localhost:5504",
+    "basePath": "/",
+    "paths": {}
+}
