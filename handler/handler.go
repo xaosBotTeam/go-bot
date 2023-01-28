@@ -54,8 +54,7 @@ func (b *BotController) GetAccountStatusById(c *fiber.Ctx) error {
 	if err != nil {
 		return multierror.Append(err, c.SendStatus(http.StatusInternalServerError))
 	}
-	err = c.Send(jsonStr)
-	return multierror.Append(err, c.SendStatus(http.StatusOK))
+	return c.Send(jsonStr)
 }
 
 func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
@@ -67,8 +66,8 @@ func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 	if err != nil {
 		return multierror.Append(err, c.SendStatus(http.StatusInternalServerError))
 	}
-	err = c.Send(jsonStr)
-	return multierror.Append(c.SendStatus(http.StatusOK))
+
+	return c.Send(jsonStr)
 }
 
 func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {

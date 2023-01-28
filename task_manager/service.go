@@ -27,7 +27,11 @@ type TaskManager struct {
 func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
 	t.status[accountId] = StatusToTasks(&status)
 	t.update[accountId] = true
-	return t.statusStorage.Update(accountId, status)
+	err := t.statusStorage.Update(accountId, status)
+	if err != nil && err.Error() == "no rows in result set" {
+		return t.statusStorage.Add(accountId, status)
+	}
+	return err
 }
 
 func (t *TaskManager) Init() error {
@@ -79,6 +83,12 @@ func (t *TaskManager) Start() error {
 
 						if currentStatus != oldStatus && !t.update[acc.ID] {
 							err = t.statusStorage.Update(acc.ID, currentStatus)
+							if err != nil && err.Error() == "no rows in result set" {
+								err = t.statusStorage.Add(acc.ID, currentStatus)
+							}
+							if err != nil {
+								log.Printf("ERR: Task Manager: %s", err.Error())
+							}
 							t.status[acc.ID] = StatusToTasks(&currentStatus)
 							if err != nil {
 								log.Printf("ERR: Task Manager: %s", err.Error())
@@ -131,5 +141,4 @@ func (t *TaskManager) GetAllStatuses() (map[int]models.Status, error) {
 		toReturn[id] = statuses[i]
 	}
 	return toReturn, nil
-
 }

@@ -25,7 +25,7 @@ func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	table := "Status"
+	table := "bot.Status"
 	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
     id int PRIMARY KEY,
@@ -50,14 +50,13 @@ type DbStatusStorage struct {
 }
 
 func (d *DbStatusStorage) GetAll() ([]int, []models.Status, error) {
-	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`), d.table)
+	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`, d.table))
 	var amountRows int
 	err := row.Scan(&amountRows)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	rows, err := d.db.Query(context.Background(), fmt.Sprint("SELECT * FROM %s", d.table))
+	rows, err := d.db.Query(context.Background(), fmt.Sprintf(`SELECT * FROM %s`, d.table))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,7 +91,7 @@ func (d *DbStatusStorage) GetByAccId(id int) (models.Status, error) {
 		status        models.Status
 	)
 
-	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT status FROM %s WHERE id == %d`), d.table, id)
+	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT status FROM %s WHERE id = %d`, d.table, id))
 	err := row.Scan(&statusJsonStr)
 	if err != nil {
 		return models.Status{}, err
@@ -111,7 +110,7 @@ func (d *DbStatusStorage) Update(id int, status models.Status) error {
 	if err != nil {
 		return err
 	}
-	_, err = d.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET status = '%s' WHERE id = %d", d.table, id, jsonStr))
+	_, err = d.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET status = '%s' WHERE id = %d", d.table, jsonStr, id))
 	return err
 }
 

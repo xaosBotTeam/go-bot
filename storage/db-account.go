@@ -16,7 +16,7 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	table := "Accounts"
+	table := "bot.Accounts"
 	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
     id  		  int PRIMARY KEY NOT NULL,
@@ -52,14 +52,14 @@ type AccountStorage struct {
 }
 
 func (a *AccountStorage) GetAll() ([]account.DbAccountInformation, error) {
-	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`), a.table)
+	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`, a.table))
 	var amountAccounts int
 	err := row.Scan(&amountAccounts)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := a.db.Query(context.Background(), fmt.Sprint("SELECT * FROM %s", a.table))
+	rows, err := a.db.Query(context.Background(), fmt.Sprintf(`SELECT * FROM %s`, a.table))
 	if err != nil {
 		return nil, err
 	}

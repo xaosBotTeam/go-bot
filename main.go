@@ -41,5 +41,14 @@ func main() {
 		port = "5504"
 	}
 
+	err = taskManager.Init()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	go func() {
+		log.Fatal(taskManager.Start())
+	}()
+
 	log.Fatal(app.Listen(":" + port))
 }
