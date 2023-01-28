@@ -14,7 +14,73 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/refresh": {
+            "get": {
+                "description": "restart task manager in order to add new accounts",
+                "summary": "Restart task manager",
+                "operationId": "restart-task-manager",
+                "responses": {}
+            }
+        },
+        "/task/": {
+            "get": {
+                "description": "get all statuses",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "All statuses",
+                "operationId": "get-all-status",
+                "responses": {}
+            }
+        },
+        "/task/id": {
+            "get": {
+                "description": "get status by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Status by id",
+                "operationId": "get-status-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "description": "get status by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "summary": "Status by id",
+                "operationId": "get-status-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "new config",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

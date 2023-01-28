@@ -5,5 +5,51 @@ info:
   description: API for xaos.mobi bot
   title: Go xaos.mobi bot
   version: 0.0.0
-paths: {}
+paths:
+  /refresh:
+    get:
+      description: restart task manager in order to add new accounts
+      operationId: restart-task-manager
+      responses: {}
+      summary: Restart task manager
+  /task/:
+    get:
+      description: get all statuses
+      operationId: get-all-status
+      produces:
+      - application/json
+      responses: {}
+      summary: All statuses
+  /task/id:
+    get:
+      description: get status by ID
+      operationId: get-status-by-id
+      parameters:
+      - description: account id
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Status by id
+    put:
+      consumes:
+      - application/json
+      description: get status by ID
+      operationId: get-status-by-id
+      parameters:
+      - description: account id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: new config
+        in: body
+        name: config
+        required: true
+        schema:
+          type: string
+      responses: {}
+      summary: Status by id
 swagger: "2.0"
