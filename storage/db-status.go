@@ -26,13 +26,19 @@ func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
 		return nil, err
 	}
 	table := "Status"
-	createSchemaString := `CREATE SCHEMA bot`
+	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-    id interger PRIMARY KEY,
-	status json`, table)
+    id int PRIMARY KEY,
+	status json)`, table)
 
 	_, err = conn.Exec(context.Background(), createSchemaString)
+	if err != nil {
+		return nil, err
+	}
 	_, err = conn.Exec(context.Background(), createTableString)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DbStatusStorage{db: conn,
 		table: table}, nil

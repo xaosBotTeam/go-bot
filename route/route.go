@@ -16,7 +16,9 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 	api.Get("/id", nil)
 	// set task config
 	api.Put("/id/", controller.PutAccountTaskConfig)
-
+	api.Get("/", nil)
+	
+	app.Patch("/refresh", nil)
 	app.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusNotFound)
 	})

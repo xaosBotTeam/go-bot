@@ -3,26 +3,32 @@ package task
 import (
 	"github.com/PuerkitoBio/goquery"
 	account "github.com/xaosBotTeam/go-shared-models/dbAccountInformation"
+	models "github.com/xaosBotTeam/go-shared-models/task"
 	"go-bot/navigation"
 	"go-bot/random"
 	"go-bot/resources"
-	"net/http"
 	"strconv"
 	"time"
 )
 
 var _ Abstract = (*ArenaBoosting)(nil)
 
+func NewArenaBoosting(status *models.Status) *ArenaBoosting {
+	if status.ArenaFarming {
+		return &ArenaBoosting{
+			UseEnergyCans: status.ArenaUseEnergyCans,
+		}
+	}
+	return nil
+}
+
 type ArenaBoosting struct {
 	UseEnergyCans bool
 }
 
 func (t *ArenaBoosting) Do(acc account.DbAccountInformation) error {
-	response, err := http.Get(acc.URL)
-	if err != nil {
-		return err
-	}
-	doc, err := goquery.NewDocumentFromReader(response.Body)
+	doc, err := navigation.GetPage(acc.URL)
+
 	if err != nil {
 		return err
 	}
@@ -63,9 +69,11 @@ func (t *ArenaBoosting) Do(acc account.DbAccountInformation) error {
 				if err != nil {
 					return err
 				}
-				doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-				if err != nil {
-					return err
+				if navigation.IsMainPage(doc) {
+					doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+					if err != nil {
+						return err
+					}
 				}
 			} else if err == navigation.ErrNotFound && !navigation.IsMainPage(doc) {
 				break
@@ -79,10 +87,16 @@ func (t *ArenaBoosting) Do(acc account.DbAccountInformation) error {
 			}
 		}
 
-		doc, err = navigation.GoByClass(doc, resources.HtmlArenaSkipButton)
+		doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlArenaSkipButton, resources.HtmlAnotherRival)
 		time.Sleep(random.RandomWaitTime())
 
-		if err != nil && !navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
+		if err != nil && !navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) && !navigation.IsMainPage(doc) {
+			return err
+		}
+		if navigation.IsMainPage(doc) {
+			doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+		}
+		if err != nil {
 			return err
 		}
 		doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
@@ -158,4 +172,13 @@ func (t *ArenaBoosting) restoreEnergy(doc *goquery.Document, limit int) (*goquer
 	} else {
 		return doc, false, nil
 	}
+}
+
+func (t *ArenaBoosting) IsPersistent() bool {
+	return false
+}
+
+func (t *ArenaBoosting) RemoveFromStatus(status models.Status) models.Status {
+	status.ArenaFarming = false
+	return status
 }

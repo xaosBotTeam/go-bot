@@ -40,3 +40,38 @@ func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 
 	return c.SendStatus(http.StatusOK)
 }
+
+func (b *BotController) GetAccountStatusById(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		return multierror.Append(err, c.SendStatus(http.StatusBadRequest))
+	}
+	status, err := b.service.GetStatusById(id)
+	if err != nil {
+		return multierror.Append(err, c.SendStatus(http.StatusNotFound))
+	}
+	jsonStr, err := json.Marshal(status)
+	if err != nil {
+		return multierror.Append(err, c.SendStatus(http.StatusInternalServerError))
+	}
+	err = c.Send(jsonStr)
+	return multierror.Append(err, c.SendStatus(http.StatusOK))
+}
+
+func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
+	statuses, err := b.service.GetAllStatuses()
+	if err != nil {
+		return multierror.Append(err, c.SendStatus(http.StatusInternalServerError))
+	}
+	jsonStr, err := json.Marshal(statuses)
+	if err != nil {
+		return multierror.Append(err, c.SendStatus(http.StatusInternalServerError))
+	}
+	err = c.Send(jsonStr)
+	return multierror.Append(c.SendStatus(http.StatusOK))
+}
+
+func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
+	b.service.RefreshAccounts()
+	return c.SendStatus(http.StatusOK)
+}

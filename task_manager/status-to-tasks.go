@@ -8,8 +8,7 @@ import (
 func StatusToTasks(status *models.Status) []task.Abstract {
 	tasks := make([]task.Abstract, 0)
 	if status.ArenaFarming {
-		tasks = append(tasks, &task.GoMainPage{})
-		tasks = append(tasks, &task.ArenaBoosting{UseEnergyCans: status.ArenaUseEnergyCans})
+		tasks = append(tasks, task.NewArenaBoosting(status))
 	}
 	return tasks
 }

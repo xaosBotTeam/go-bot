@@ -17,17 +17,23 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 		return nil, err
 	}
 	table := "Accounts"
-	createSchemaString := `CREATE SCHEMA bot`
+	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-    id interger PRIMARY KEY NOT NULL,
+    id  		  int PRIMARY KEY NOT NULL,
 	game_id       int NOT NULL,
 	friendly_name text NOT NULL,
-	owner_id        int NOT NULL,
-	url          text NOT NULL,
-	energy_limit int NOT NULL`, table)
+	owner_id      int NOT NULL,
+	url           text NOT NULL,
+	energy_limit  int NOT NULL)`, table)
 
 	_, err = conn.Exec(context.Background(), createSchemaString)
+	if err != nil {
+		return nil, err
+	}
 	_, err = conn.Exec(context.Background(), createTableString)
+	if err != nil {
+		return nil, err
+	}
 
 	return &AccountStorage{db: conn,
 		table: table}, nil

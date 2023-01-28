@@ -11,4 +11,5 @@ const (
 	HtmlEnergyIsEmpty   = "У вас не хватает энергии."
 	HtmlYouAreTooWeak   = "Вы очень слабы"
 	HtmlRestoreHealth   = "mybutt_att"
+	HtmlAnotherRival    = "Другой противник"
 )

@@ -22,6 +22,9 @@ func main() {
 		log.Fatal("FATAL: Set XAOSBOT_CONNECTION_STRING to connect to the database")
 	}
 	accountStorage, err := storage.NewAccountStorage(conn)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	statusStorage, err := storage.NewStatusStorage(conn)
 	if err != nil {
 		log.Fatal(err.Error())
