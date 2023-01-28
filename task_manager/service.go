@@ -27,9 +27,11 @@ type TaskManager struct {
 func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
 	t.status[accountId] = StatusToTasks(&status)
 	t.update[accountId] = true
-	err := t.statusStorage.Update(accountId, status)
+	_, err := t.statusStorage.GetByAccId(accountId)
 	if err != nil && err.Error() == "no rows in result set" {
 		return t.statusStorage.Add(accountId, status)
+	} else {
+		return t.statusStorage.Update(accountId, status)
 	}
 	return err
 }
