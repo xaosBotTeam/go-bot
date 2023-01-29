@@ -86,78 +86,77 @@ func (t *TaskManager) Start() error {
 		var wg sync.WaitGroup
 		for _, acc := range accounts {
 			tasks, ok := t.status[acc.ID]
-			if ok {
-				wg.Add(1)
-				go func() {
-					for {
-						currentStatus, err := t.GetStatusById(acc.ID)
-						oldStatus := currentStatus
-						if err != nil {
-							log.Printf("%sERR: Task Manager: %s", acc.FriendlyName, err.Error())
-						}
-						oldAcc := acc
-						for _, collector := range t.collectors[acc.ID] {
-							if collector.CheckCondition() {
-								acc, err = collector.Collect(acc)
-								if err != nil {
-									log.Printf("ERR: Task Manager info collecting: %s", err.Error())
-								}
-							}
-						}
-
-						if oldAcc != acc {
-							err = t.accountStorage.Update(acc)
-							if err != nil {
-								log.Printf("ERR: Task Manager: updating account after collecting info: %s", err.Error())
-							}
-						}
-
-						for _, currentTask := range tasks {
-							if currentTask.CheckCondition() {
-								err = currentTask.Do(acc)
-								if err != nil {
-									log.Printf("ERR: Task Manager, task %s: %s\n", currentTask.GetName(), err.Error())
-								}
-								if !currentTask.IsPersistent() {
-									currentStatus = currentTask.RemoveFromStatus(currentStatus)
-								}
-
-								log.Printf("Task %s ended", currentTask.GetName())
-							}
-						}
-
-						if currentStatus != oldStatus && !t.update[acc.ID] {
-							err = t.statusStorage.Update(acc.ID, currentStatus)
-							if err != nil && err == pgx.ErrNoRows {
-								err = t.statusStorage.Add(acc.ID, currentStatus)
-							}
-							if err != nil {
-								log.Printf("ERR: Task Manager: %s", err.Error())
-							}
-							t.status[acc.ID] = StatusToTasks(&currentStatus)
-							if err != nil {
-								log.Printf("ERR: Task Manager: %s", err.Error())
-							}
-						}
-
-						if t.stop {
-							wg.Done()
-							return
-						}
-
-						tasks, ok = t.status[acc.ID]
-						if t.update[acc.ID] {
-							t.update[acc.ID] = false
-						}
-						if !ok || len(tasks) == 0 {
-							wg.Done()
-							return
-						}
-
-						time.Sleep(1 * time.Second)
+			currentAccount := acc
+			wg.Add(1)
+			go func() {
+				for {
+					currentStatus, err := t.GetStatusById(currentAccount.ID)
+					oldStatus := currentStatus
+					if err != nil {
+						log.Printf("%sERR: Task Manager: %s", currentAccount.FriendlyName, err.Error())
 					}
-				}()
-			}
+					oldAcc := currentAccount
+					for _, collector := range t.collectors[currentAccount.ID] {
+						if collector.CheckCondition() {
+							currentAccount, err = collector.Collect(currentAccount)
+							if err != nil {
+								log.Printf("ERR: Task Manager info collecting: %s", err.Error())
+							}
+						}
+					}
+
+					if oldAcc != currentAccount {
+						err = t.accountStorage.Update(currentAccount)
+						if err != nil {
+							log.Printf("ERR: Task Manager: updating account after collecting info: %s", err.Error())
+						}
+					}
+
+					for _, currentTask := range tasks {
+						if currentTask.CheckCondition() {
+							err = currentTask.Do(currentAccount)
+							if err != nil {
+								log.Printf("ERR: Task Manager, task %s: %s\n", currentTask.GetName(), err.Error())
+							}
+							if !currentTask.IsPersistent() {
+								currentStatus = currentTask.RemoveFromStatus(currentStatus)
+							}
+
+							log.Printf("Task %s ended", currentTask.GetName())
+						}
+					}
+
+					if currentStatus != oldStatus && !t.update[currentAccount.ID] {
+						err = t.statusStorage.Update(currentAccount.ID, currentStatus)
+						if err != nil && err == pgx.ErrNoRows {
+							err = t.statusStorage.Add(currentAccount.ID, currentStatus)
+						}
+						if err != nil {
+							log.Printf("ERR: Task Manager: %s", err.Error())
+						}
+						t.status[currentAccount.ID] = StatusToTasks(&currentStatus)
+						if err != nil {
+							log.Printf("ERR: Task Manager: %s", err.Error())
+						}
+					}
+
+					if t.stop {
+						wg.Done()
+						return
+					}
+
+					tasks, ok = t.status[currentAccount.ID]
+					if t.update[currentAccount.ID] {
+						t.update[currentAccount.ID] = false
+					}
+					if !ok || len(tasks) == 0 {
+						wg.Done()
+						return
+					}
+
+					time.Sleep(1 * time.Second)
+				}
+			}()
 		}
 		wg.Wait()
 		log.Printf("Restart tasks in 30 seconds...")
