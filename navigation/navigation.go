@@ -118,6 +118,10 @@ func IsTopTitleContains(doc *goquery.Document, title string) bool {
 	return selection.Text() == title
 }
 
+func GetTopTitle(document *goquery.Document) string {
+	return document.Find("." + resources.HtmlTopTitle).Text()
+}
+
 func GetByClassAndImage(doc *goquery.Document, class string, imageName string) (*goquery.Document, error) {
 	newDoc := doc
 	finalError := ErrNotFound

@@ -4,6 +4,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
+	info_collector "go-bot/info-collector"
 	"go-bot/storage"
 	"go-bot/task"
 	"log"
@@ -15,7 +16,13 @@ func New(accounts storage.AbstractAccountStorage, statuses storage.AbstractStatu
 	if accounts == nil || statuses == nil {
 		return nil
 	}
-	return &TaskManager{accountStorage: accounts, statusStorage: statuses, status: make(map[int][]task.Abstract), stop: false, update: make(map[int]bool)}
+	return &TaskManager{
+		accountStorage: accounts,
+		statusStorage:  statuses,
+		status:         make(map[int][]task.Abstract),
+		stop:           false, update: make(map[int]bool),
+		collectors: make(map[int][]info_collector.Abstract),
+	}
 }
 
 type TaskManager struct {
@@ -24,6 +31,7 @@ type TaskManager struct {
 	status         map[int][]task.Abstract
 	stop           bool
 	update         map[int]bool
+	collectors     map[int][]info_collector.Abstract
 }
 
 func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
@@ -35,7 +43,6 @@ func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
 	} else {
 		return t.statusStorage.Update(accountId, status)
 	}
-	return err
 }
 
 func (t *TaskManager) Init() error {
@@ -46,6 +53,26 @@ func (t *TaskManager) Init() error {
 	for i, id := range ids {
 		t.status[id] = StatusToTasks(&statuses[i])
 		t.update[id] = false
+		t.collectors[id] = []info_collector.Abstract{
+			&info_collector.Nickname{},
+			&info_collector.GameId{},
+			&info_collector.EnergyLimit{},
+		}
+	}
+	accounts, err := t.accountStorage.GetAll()
+	if err != nil {
+		return err
+	}
+	for _, acc := range accounts {
+		if _, ok := t.status[acc.ID]; !ok {
+			t.status[acc.ID] = make([]task.Abstract, 0)
+			t.update[acc.ID] = false
+			t.collectors[acc.ID] = []info_collector.Abstract{
+				&info_collector.Nickname{},
+				&info_collector.GameId{},
+				&info_collector.EnergyLimit{},
+			}
+		}
 	}
 	return nil
 }
@@ -60,9 +87,6 @@ func (t *TaskManager) Start() error {
 		for _, acc := range accounts {
 			tasks, ok := t.status[acc.ID]
 			if ok {
-				if len(tasks) == 0 {
-					continue
-				}
 				wg.Add(1)
 				go func() {
 					for {
@@ -71,6 +95,23 @@ func (t *TaskManager) Start() error {
 						if err != nil {
 							log.Printf("ERR: Task Manager: %s", err.Error())
 						}
+						oldAcc := acc
+						for _, collector := range t.collectors[acc.ID] {
+							if collector.CheckCondition() {
+								acc, err = collector.Collect(acc)
+								if err != nil {
+									log.Printf("ERR: Task Manager info collecting: %s", err.Error())
+								}
+							}
+						}
+
+						if oldAcc != acc {
+							err = t.accountStorage.Update(acc)
+							if err != nil {
+								log.Printf("ERR: Task Manager: updating account after collecting info: %s", err.Error())
+							}
+						}
+
 						for _, currentTask := range tasks {
 							if currentTask.CheckCondition() {
 								err = currentTask.Do(acc)

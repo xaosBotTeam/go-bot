@@ -12,4 +12,5 @@ const (
 	HtmlYouAreTooWeak   = "Вы очень слабы"
 	HtmlRestoreHealth   = "mybutt_att"
 	HtmlAnotherRival    = "Другой противник"
+	HtmlCharacter       = "Герой"
 )
