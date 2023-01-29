@@ -1,6 +1,7 @@
 package task_manager
 
 import (
+	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
 	"go-bot/storage"
 	"go-bot/task"
@@ -143,4 +144,16 @@ func (t *TaskManager) GetAllStatuses() (map[int]models.Status, error) {
 		toReturn[id] = statuses[i]
 	}
 	return toReturn, nil
+}
+
+func (t *TaskManager) AddAccount(url string, ownerId int) (account.Account, error) {
+	return t.accountStorage.Add(url, ownerId)
+}
+
+func (t *TaskManager) GetAllAccounts() ([]account.Account, error) {
+	return t.accountStorage.GetAll()
+}
+
+func (t *TaskManager) GetAccountById(id int) (account.Account, error) {
+	return t.accountStorage.GetById(id)
 }

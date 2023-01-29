@@ -46,3 +46,7 @@ func (f *FakeStatusStorage) Add(id int, status models.Status) error {
 	f.statuses[id] = status
 	return nil
 }
+
+func (f *FakeStatusStorage) Close() error {
+	return nil
+}

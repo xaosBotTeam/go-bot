@@ -18,13 +18,19 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	api := app.Group("/task")
-	api.Get("/id", controller.GetAccountStatusById)
-	api.Put("/id/", controller.PutAccountTaskConfig)
-	api.Get("/", controller.GetAllStatuses)
-
 	app.Patch("/refresh", controller.RestartTaskManager)
-	
+
+	taskApi := app.Group("/task")
+	taskApi.Get("/", controller.GetAllStatuses)
+	taskApi.Get("/:id", controller.GetAccountStatusById)
+	taskApi.Put("/:id", controller.PutAccountTaskConfig)
+	//taskApi.Get("/", controller.GetAllStatuses)
+
+	accountApi := app.Group("/account")
+	accountApi.Get("/", controller.GetAllAccounts)
+	accountApi.Get("/:id", controller.GetAccountById)
+	accountApi.Post("/", controller.AddAccount)
+
 	app.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusNotFound)
 	})

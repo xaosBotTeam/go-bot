@@ -16,7 +16,10 @@ import (
 // @host localhost:5504
 // @BasePath /
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: false,
+		AppName:               "Xaos.mobi BOT",
+	})
 	conn := os.Getenv("XAOSBOT_CONNECTION_STRING")
 	if conn == "" {
 		log.Fatal("FATAL: Set XAOSBOT_CONNECTION_STRING to connect to the database")
@@ -29,7 +32,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	defer accountStorage.Close()
+
+	defer func(accountStorage storage.AbstractAccountStorage) {
+		err := accountStorage.Close()
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}(accountStorage)
+	defer func(statusStorage storage.AbstractStatusStorage) {
+		err := statusStorage.Close()
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}(statusStorage)
+
 	taskManager := task_manager.New(accountStorage, statusStorage)
 	controller := handler.New(taskManager)
 

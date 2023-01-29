@@ -15,6 +15,68 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Get all game accounts",
+                "operationId": "get-all-accounts",
+                "responses": {}
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Add new game account",
+                "operationId": "add-new-game-account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "account url",
+                        "name": "url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id of account` + "`" + `s owner",
+                        "name": "owner",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/account/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Get game account by id",
+                "operationId": "get-account-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/refresh": {
             "get": {
                 "description": "restart task manager in order to add new accounts",
@@ -40,7 +102,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/task/id": {
+        "/task/{id}": {
             "get": {
                 "description": "get status by ID",
                 "produces": [
@@ -56,7 +118,7 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "account id",
                         "name": "id",
-                        "in": "query"
+                        "in": "path"
                     }
                 ],
                 "responses": {}
@@ -76,7 +138,7 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "account id",
                         "name": "id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     },
                     {

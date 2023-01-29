@@ -14,6 +14,7 @@ type AbstractStatusStorage interface {
 	Update(id int, status models.Status) error
 	Delete(id int) error
 	Add(id int, status models.Status) error
+	Close() error
 }
 
 func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
@@ -126,4 +127,8 @@ func (d *DbStatusStorage) Add(id int, status models.Status) error {
 	}
 	_, err = d.db.Exec(context.Background(), fmt.Sprintf("INSERT INTO %s VALUES (%d, '%s')", d.table, id, string(jsonStr)))
 	return err
+}
+
+func (d *DbStatusStorage) Close() error {
+	return d.db.Close(context.Background())
 }
