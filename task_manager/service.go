@@ -1,6 +1,7 @@
 package task_manager
 
 import (
+	"github.com/jackc/pgx/v5"
 	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
 	"go-bot/storage"
@@ -86,7 +87,7 @@ func (t *TaskManager) Start() error {
 
 						if currentStatus != oldStatus && !t.update[acc.ID] {
 							err = t.statusStorage.Update(acc.ID, currentStatus)
-							if err != nil && err.Error() == "no rows in result set" {
+							if err != nil && err == pgx.ErrNoRows {
 								err = t.statusStorage.Add(acc.ID, currentStatus)
 							}
 							if err != nil {
@@ -147,7 +148,20 @@ func (t *TaskManager) GetAllStatuses() (map[int]models.Status, error) {
 }
 
 func (t *TaskManager) AddAccount(url string, ownerId int) (account.Account, error) {
-	return t.accountStorage.Add(url, ownerId)
+	acc, err := t.accountStorage.Add(url, ownerId)
+	if err != nil {
+		return account.Account{}, err
+	}
+	status, err := t.statusStorage.GetByAccId(acc.ID)
+	if err == pgx.ErrNoRows {
+		t.status[acc.ID] = make([]task.Abstract, 0)
+	} else if err != nil {
+		t.status[acc.ID] = StatusToTasks(&status)
+	} else {
+		log.Println(err.Error())
+	}
+	t.update[acc.ID] = false
+	return acc, nil
 }
 
 func (t *TaskManager) GetAllAccounts() ([]account.Account, error) {

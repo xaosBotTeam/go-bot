@@ -19,7 +19,7 @@ func GetPage(url string) (*goquery.Document, error) {
 }
 
 func IsMainPage(doc *goquery.Document) bool {
-	selection := doc.Find(resources.HtmlTopTitle)
+	selection := doc.Find("." + resources.HtmlTopTitle)
 	return selection.Text() == "Наследие Хаоса"
 }
 
@@ -114,7 +114,7 @@ func GoByClassAndVisibleTextContains(doc *goquery.Document, class string, text s
 }
 
 func IsTopTitleContains(doc *goquery.Document, title string) bool {
-	selection := doc.Find(resources.HtmlTopTitle)
+	selection := doc.Find("." + resources.HtmlTopTitle)
 	return selection.Text() == title
 }
 

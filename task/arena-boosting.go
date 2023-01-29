@@ -28,72 +28,28 @@ type ArenaBoosting struct {
 
 func (t *ArenaBoosting) Do(acc account.Account) error {
 	doc, err := navigation.GetPage(acc.URL)
-
 	if err != nil {
 		return err
 	}
-	doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-	if err == navigation.ErrNotFound {
-		doc, err = navigation.GoToMainPagePyMenuLink(doc)
-		if err != nil {
-			return err
-		}
-	} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
-		doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
 
-		if err != nil {
-			return err
-		}
-		if navigation.IsMainPage(doc) {
-			doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+	doc, err = t.returnToArena(doc)
+
+	energyEnough := true
+	for energyEnough {
+		doc, err = navigation.GoByClass(doc, resources.HtmlArenaGoldButton)
+		if navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
+			doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
+		} else if err == navigation.ErrNotFound && navigation.IsTopTitleContains(doc, "Арена Смерти") {
+			doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlArenaSkipButton, resources.HtmlAnotherRival)
+			if err != nil {
+				return err
+			}
+			doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
 			if err != nil {
 				return err
 			}
 		}
-	}
-
-	energyEnough := true
-	for energyEnough {
-		for {
-			doc, err = navigation.GoByClass(doc, resources.HtmlArenaGoldButton)
-
-			if navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
-				break
-			} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
-				doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
-				if err != nil {
-					return err
-				}
-				if navigation.IsMainPage(doc) {
-					doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-					if err != nil {
-						return err
-					}
-				}
-			} else if err == navigation.ErrNotFound && !navigation.IsMainPage(doc) {
-				break
-			} else if err == navigation.ErrNotFound && navigation.IsMainPage(doc) {
-				doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-				if err != nil {
-					return err
-				}
-			} else if err != nil {
-				return err
-			}
-		}
-
-		doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlArenaSkipButton, resources.HtmlAnotherRival)
-
-		if err != nil && !navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) && !navigation.IsMainPage(doc) {
-			return err
-		}
-		if navigation.IsMainPage(doc) {
-			doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-		}
-		if err != nil {
-			return err
-		}
-		doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
+		doc, err = t.returnToArena(doc)
 		if err != nil {
 			return err
 		}
@@ -108,31 +64,6 @@ func (t *ArenaBoosting) CheckCondition() bool {
 func (t *ArenaBoosting) GetName() string {
 	return "ArenaBoosting"
 }
-
-//func (t *ArenaBoosting) tryToReturnToMainProcess(doc *goquery.Document) (*goquery.Document, bool, error) {
-//	if navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
-//		return doc, false, nil
-//	} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
-//		doc, err := navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
-//		if err != nil {
-//			return doc, false, err
-//		}
-//		doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-//		if err != nil {
-//			return doc, false, err
-//		}
-//		return doc, true, nil
-//	} else if err == navigation.ErrNotFound && !navigation.IsMainPage(doc) {
-//		break
-//	} else if err == navigation.ErrNotFound && navigation.IsMainPage(doc) {
-//		doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-//		if err != nil {
-//			return err
-//		}
-//	} else if err != nil {
-//		return err
-//	}
-//}
 
 func (t *ArenaBoosting) restoreEnergy(doc *goquery.Document, limit int) (*goquery.Document, bool, error) {
 	err := (error)(nil)
@@ -175,4 +106,37 @@ func (t *ArenaBoosting) IsPersistent() bool {
 func (t *ArenaBoosting) RemoveFromStatus(status models.Status) models.Status {
 	status.ArenaFarming = false
 	return status
+}
+
+func (t *ArenaBoosting) restoreCharacterHealthReturnToArena(doc *goquery.Document) (*goquery.Document, error) {
+	doc, err := navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
+	if err != nil {
+		return doc, err
+	}
+	if navigation.IsMainPage(doc) {
+		doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+		if err != nil {
+			return doc, err
+		}
+	}
+	return doc, err
+}
+
+func (t *ArenaBoosting) returnToArena(doc *goquery.Document) (*goquery.Document, error) {
+	var err error
+	if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
+		doc, err = t.restoreCharacterHealthReturnToArena(doc)
+	}
+
+	if err != nil {
+		return doc, err
+	}
+
+	if navigation.IsTopTitleContains(doc, "Арена Смерти") {
+		return doc, nil
+	}
+	if navigation.IsMainPage(doc) {
+		return navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+	}
+	return doc, navigation.ErrNotFound
 }

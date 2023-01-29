@@ -24,7 +24,6 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 	taskApi.Get("/", controller.GetAllStatuses)
 	taskApi.Get("/:id", controller.GetAccountStatusById)
 	taskApi.Put("/:id", controller.PutAccountTaskConfig)
-	//taskApi.Get("/", controller.GetAllStatuses)
 
 	accountApi := app.Group("/account")
 	accountApi.Get("/", controller.GetAllAccounts)

@@ -58,7 +58,6 @@ func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 // @Summary		Get status by id
 // @Description	get status by ID
 // @ID				get-status-by-id
-//
 // @Tags 			Task
 // @Produce		json
 // @Param			id path int false "account id"
@@ -94,10 +93,10 @@ func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 	return c.JSON(statuses)
 }
 
-//	@Summary		Restart task manager
-//	@Description	restart task manager in order to add new accounts
-//	@ID				restart-task-manager
-//	@Tags			General
+// @Summary		Restart task manager
+// @Description	restart task manager in order to add new accounts
+// @ID				restart-task-manager
+// @Tags			General
 //
 // @Router			/refresh [get]
 func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
@@ -105,11 +104,11 @@ func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).SendString("Refresh request sent to task manager")
 }
 
-//	@Summary		Add new game account
-//	@ID				add-new-game-account
+// @Summary		Add new game account
+// @ID				add-new-game-account
 //
 // @Tags 			Account
-// @Produce			json
+// @Produce		json
 // @Param			url	query string true "account url"
 // @Param			owner query int true "id of account`s owner"
 // @Router			/account/ [post]
@@ -132,11 +131,11 @@ func (b *BotController) AddAccount(c *fiber.Ctx) error {
 	return c.JSON(acc)
 }
 
-//	@Summary		Get game account by id
-//	@ID				get-account-by-id
+// @Summary		Get game account by id
+// @ID				get-account-by-id
 //
 // @Tags 			Account
-// @Produce			json
+// @Produce		json
 // @Param			id	path int true "account id"
 // @Router			/account/{id} [get]
 func (b *BotController) GetAccountById(c *fiber.Ctx) error {

@@ -1,7 +1,7 @@
 package resources
 
 const (
-	HtmlTopTitle        = "top-title"
+	HtmlTopTitle        = "title-top"
 	HtmlMainPage        = " На главную"
 	HtmlDeathArena      = " Aрeнa Смeрти"
 	HtmlArenaGoldButton = "mybutt_gold"
