@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
-	account "github.com/xaosBotTeam/go-shared-models/dbAccountInformation"
+	"github.com/xaosBotTeam/go-shared-models/account"
 )
 
 func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
@@ -40,8 +40,8 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 }
 
 type AbstractAccountStorage interface {
-	GetAll() ([]account.DbAccountInformation, error)
-	GetById(id int) (account.DbAccountInformation, error)
+	GetAll() ([]account.Account, error)
+	GetById(id int) (account.Account, error)
 	GetTable() string
 	Close() error
 }
@@ -51,7 +51,7 @@ type AccountStorage struct {
 	table string
 }
 
-func (a *AccountStorage) GetAll() ([]account.DbAccountInformation, error) {
+func (a *AccountStorage) GetAll() ([]account.Account, error) {
 	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`, a.table))
 	var amountAccounts int
 	err := row.Scan(&amountAccounts)
@@ -64,7 +64,7 @@ func (a *AccountStorage) GetAll() ([]account.DbAccountInformation, error) {
 		return nil, err
 	}
 
-	accounts := make([]account.DbAccountInformation, amountAccounts)
+	accounts := make([]account.Account, amountAccounts)
 
 	var (
 		id, gameId, ownerId, energyLimit int
@@ -76,7 +76,7 @@ func (a *AccountStorage) GetAll() ([]account.DbAccountInformation, error) {
 		if err != nil {
 			return nil, err
 		}
-		accounts[i] = account.DbAccountInformation{
+		accounts[i] = account.Account{
 			ID:           id,
 			GameID:       gameId,
 			FriendlyName: friendlyName,
@@ -88,7 +88,7 @@ func (a *AccountStorage) GetAll() ([]account.DbAccountInformation, error) {
 	return accounts, nil
 }
 
-func (a *AccountStorage) GetById(id int) (account.DbAccountInformation, error) {
+func (a *AccountStorage) GetById(id int) (account.Account, error) {
 	var (
 		gameId, ownerId, energyLimit int
 		friendlyName, url            string
@@ -96,9 +96,9 @@ func (a *AccountStorage) GetById(id int) (account.DbAccountInformation, error) {
 	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT game_id, friendly_name, owner_id, url, energy_limit FROM %s WHERE id == %d`, a.table, id))
 	err := row.Scan(&gameId, &friendlyName, &ownerId, &url, &energyLimit)
 	if err != nil {
-		return account.DbAccountInformation{}, err
+		return account.Account{}, err
 	}
-	return account.DbAccountInformation{
+	return account.Account{
 		ID:           id,
 		GameID:       gameId,
 		FriendlyName: friendlyName,

@@ -3,10 +3,12 @@ package http_bridge
 import (
 	"bytes"
 	"fmt"
+	"go-bot/random"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var mode = os.Getenv("XAOSBOT_MODE")
@@ -15,6 +17,7 @@ var last = 0
 var current = 0
 
 func GetBodyBytes(url string) (io.Reader, error) {
+	time.Sleep(random.RandomWaitTime())
 	rsp, err := http.Get(url)
 	if err != nil {
 		return nil, err

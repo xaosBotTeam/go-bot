@@ -1,4 +1,13 @@
 basePath: /
+definitions:
+  task.Status:
+    description: Model with information about tasks and their parameters
+    properties:
+      arena_farming:
+        type: boolean
+      arena_use_energy_cans:
+        type: boolean
+    type: object
 host: localhost:5504
 info:
   contact: {}
@@ -12,6 +21,8 @@ paths:
       operationId: restart-task-manager
       responses: {}
       summary: Restart task manager
+      tags:
+      - General
   /task/:
     get:
       description: get all statuses
@@ -19,7 +30,9 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: All statuses
+      summary: Get all statuses
+      tags:
+      - Task
   /task/id:
     get:
       description: get status by ID
@@ -32,7 +45,9 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Status by id
+      summary: Get status by id
+      tags:
+      - Task
     put:
       consumes:
       - application/json
@@ -49,7 +64,9 @@ paths:
         name: config
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/task.Status'
       responses: {}
-      summary: Status by id
+      summary: Update status by id
+      tags:
+      - Task
 swagger: "2.0"

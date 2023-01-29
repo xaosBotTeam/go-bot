@@ -2,30 +2,30 @@ package storage
 
 import (
 	"errors"
-	account "github.com/xaosBotTeam/go-shared-models/dbAccountInformation"
+	account "github.com/xaosBotTeam/go-shared-models/account"
 )
 
 func NewFakeAccountStorage() *FakeAccountStorage {
-	return &FakeAccountStorage{accounts: make([]account.DbAccountInformation, 0)}
+	return &FakeAccountStorage{accounts: make([]account.Account, 0)}
 }
 
 type FakeAccountStorage struct {
-	accounts []account.DbAccountInformation
+	accounts []account.Account
 }
 
-func (f *FakeAccountStorage) GetAll() ([]account.DbAccountInformation, error) {
-	copyAccounts := make([]account.DbAccountInformation, len(f.accounts))
+func (f *FakeAccountStorage) GetAll() ([]account.Account, error) {
+	copyAccounts := make([]account.Account, len(f.accounts))
 	copy(copyAccounts, f.accounts)
 	return copyAccounts, nil
 }
 
-func (f *FakeAccountStorage) GetById(id int) (account.DbAccountInformation, error) {
+func (f *FakeAccountStorage) GetById(id int) (account.Account, error) {
 	for _, acc := range f.accounts {
 		if acc.ID == id {
 			return acc, nil
 		}
 	}
-	return account.DbAccountInformation{}, errors.New("not found")
+	return account.Account{}, errors.New("not found")
 }
 
 func (f *FakeAccountStorage) GetTable() string {
@@ -35,6 +35,6 @@ func (f *FakeAccountStorage) GetTable() string {
 func (f *FakeAccountStorage) Close() error {
 	return nil
 }
-func (f *FakeAccountStorage) Add(acc account.DbAccountInformation) {
+func (f *FakeAccountStorage) Add(acc account.Account) {
 	f.accounts = append(f.accounts, acc)
 }

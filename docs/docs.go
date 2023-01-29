@@ -18,6 +18,9 @@ const docTemplate = `{
         "/refresh": {
             "get": {
                 "description": "restart task manager in order to add new accounts",
+                "tags": [
+                    "General"
+                ],
                 "summary": "Restart task manager",
                 "operationId": "restart-task-manager",
                 "responses": {}
@@ -29,7 +32,10 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "All statuses",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get all statuses",
                 "operationId": "get-all-status",
                 "responses": {}
             }
@@ -40,7 +46,10 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Status by id",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get status by id",
                 "operationId": "get-status-by-id",
                 "parameters": [
                     {
@@ -57,7 +66,10 @@ const docTemplate = `{
                 "consumes": [
                     "application/json"
                 ],
-                "summary": "Status by id",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Update status by id",
                 "operationId": "get-status-by-id",
                 "parameters": [
                     {
@@ -73,11 +85,25 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/task.Status"
                         }
                     }
                 ],
                 "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "task.Status": {
+            "description": "Model with information about tasks and their parameters",
+            "type": "object",
+            "properties": {
+                "arena_farming": {
+                    "type": "boolean"
+                },
+                "arena_use_energy_cans": {
+                    "type": "boolean"
+                }
             }
         }
     }

@@ -2,7 +2,7 @@ package task
 
 import (
 	"github.com/PuerkitoBio/goquery"
-	account "github.com/xaosBotTeam/go-shared-models/dbAccountInformation"
+	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
 	"go-bot/navigation"
 	"go-bot/random"
@@ -26,42 +26,37 @@ type ArenaBoosting struct {
 	UseEnergyCans bool
 }
 
-func (t *ArenaBoosting) Do(acc account.DbAccountInformation) error {
+func (t *ArenaBoosting) Do(acc account.Account) error {
 	doc, err := navigation.GetPage(acc.URL)
 
 	if err != nil {
 		return err
 	}
-	for i := 0; i < 5; i++ {
-		doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
-		if err == navigation.ErrNotFound {
-			time.Sleep(random.RandomWaitTime())
-			doc, err = navigation.GoToMainPagePyMenuLink(doc)
-			if err != nil {
-				return err
-			}
-			time.Sleep(random.RandomWaitTime())
-		} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
-			doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
-			if err != nil {
-				return err
-			}
+	doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
+	if err == navigation.ErrNotFound {
+		doc, err = navigation.GoToMainPagePyMenuLink(doc)
+		if err != nil {
+			return err
+		}
+	} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
+		doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
+
+		if err != nil {
+			return err
+		}
+		if navigation.IsMainPage(doc) {
 			doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlDeathArena)
 			if err != nil {
 				return err
 			}
-			break
-		} else {
-			break
 		}
 	}
-	time.Sleep(random.RandomWaitTime())
+
 	energyEnough := true
 	for energyEnough {
 		for {
 			doc, err = navigation.GoByClass(doc, resources.HtmlArenaGoldButton)
 
-			time.Sleep(random.RandomWaitTime())
 			if navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
 				break
 			} else if navigation.IsVisibleTextContains(doc, resources.HtmlYouAreTooWeak) {
@@ -88,7 +83,6 @@ func (t *ArenaBoosting) Do(acc account.DbAccountInformation) error {
 		}
 
 		doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlArenaSkipButton, resources.HtmlAnotherRival)
-		time.Sleep(random.RandomWaitTime())
 
 		if err != nil && !navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) && !navigation.IsMainPage(doc) {
 			return err

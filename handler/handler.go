@@ -22,13 +22,14 @@ type BotController struct {
 	service *task_manager.TaskManager
 }
 
-//	@Summary		Status by id
+//	@Summary		Update status by id
 //	@Description	get status by ID
 //	@ID				get-status-by-id
 //
-// @Accept json
-// @Param id query int true "account id"
-// @Param config body string true "new config"
+// @Tags 			Task
+// @Accept 			json
+// @Param 			id query int true "account id"
+// @Param 			config body models.Status true "new config"
 // @Router			/task/id [put]
 func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Query("id"))
@@ -49,10 +50,11 @@ func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusOK)
 }
 
-//	@Summary		Status by id
+//	@Summary		Get status by id
 //	@Description	get status by ID
 //	@ID				get-status-by-id
 //
+// @Tags 			Task
 // @Produce			json
 // @Param			id	query int false "account id"
 // @Router			/task/id [get]
@@ -65,17 +67,14 @@ func (b *BotController) GetAccountStatusById(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(http.StatusNotFound)
 	}
-	_, err = json.Marshal(status)
-	if err != nil {
-		return c.SendStatus(http.StatusInternalServerError)
-	}
 	return c.JSON(status)
 }
 
-//	@Summary		All statuses
+//	@Summary		Get all statuses
 //	@Description	get all statuses
 //	@ID				get-all-status
 //
+// @Tags			Task
 // @Produce			json
 // @Router			/task/ [get]
 func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
@@ -83,17 +82,13 @@ func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(http.StatusInternalServerError)
 	}
-	_, err = json.Marshal(statuses)
-	if err != nil {
-		return c.SendStatus(http.StatusInternalServerError)
-	}
-
 	return c.JSON(statuses)
 }
 
 //	@Summary		Restart task manager
 //	@Description	restart task manager in order to add new accounts
 //	@ID				restart-task-manager
+//	@Tags			General
 //
 // @Router			/refresh [get]
 func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {

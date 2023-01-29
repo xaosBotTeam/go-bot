@@ -15,12 +15,16 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
 	app.Use(cors.New())
-	app.Get("/swagger/*", swagger.HandlerDefault) // default
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
+
 	api := app.Group("/task")
 	api.Get("/id", controller.GetAccountStatusById)
 	api.Put("/id/", controller.PutAccountTaskConfig)
 	api.Get("/", controller.GetAllStatuses)
+
 	app.Patch("/refresh", controller.RestartTaskManager)
+	
 	app.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusNotFound)
 	})
