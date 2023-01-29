@@ -33,18 +33,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	defer func(accountStorage storage.AbstractAccountStorage) {
-		err := accountStorage.Close()
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}(accountStorage)
-	defer func(statusStorage storage.AbstractStatusStorage) {
-		err := statusStorage.Close()
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}(statusStorage)
+	defer accountStorage.Close()
+	defer statusStorage.Close()
 
 	taskManager := task_manager.New(accountStorage, statusStorage)
 	controller := handler.New(taskManager)

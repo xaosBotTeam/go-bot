@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	models "github.com/xaosBotTeam/go-shared-models/task"
 )
 
@@ -14,11 +14,11 @@ type AbstractStatusStorage interface {
 	Update(id int, status models.Status) error
 	Delete(id int) error
 	Add(id int, status models.Status) error
-	Close() error
+	Close()
 }
 
 func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
-	conn, err := pgx.Connect(context.Background(), connString)
+	conn, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
 }
 
 type DbStatusStorage struct {
-	db    *pgx.Conn
+	db    *pgxpool.Pool
 	table string
 }
 
@@ -61,7 +61,7 @@ func (d *DbStatusStorage) GetAll() ([]int, []models.Status, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
+	defer rows.Close()
 	statuses := make([]models.Status, amountRows)
 	ids := make([]int, amountRows)
 	var (
@@ -129,6 +129,6 @@ func (d *DbStatusStorage) Add(id int, status models.Status) error {
 	return err
 }
 
-func (d *DbStatusStorage) Close() error {
-	return d.db.Close(context.Background())
+func (d *DbStatusStorage) Close() {
+	d.db.Close()
 }

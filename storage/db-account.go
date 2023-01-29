@@ -3,12 +3,12 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/xaosBotTeam/go-shared-models/account"
 )
 
 func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
-	conn, err := pgx.Connect(context.Background(), connString)
+	conn, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +43,13 @@ type AbstractAccountStorage interface {
 	GetAll() ([]account.Account, error)
 	GetById(id int) (account.Account, error)
 	GetTable() string
-	Close() error
+	Close()
 	Add(url string, ownerId int) (account.Account, error)
 	Update(acc account.Account) error
 }
 
 type AccountStorage struct {
-	db    *pgx.Conn
+	db    *pgxpool.Pool
 	table string
 }
 
@@ -65,7 +65,7 @@ func (a *AccountStorage) GetAll() ([]account.Account, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer rows.Close()
 	accounts := make([]account.Account, amountAccounts)
 
 	var (
@@ -113,15 +113,14 @@ func (a *AccountStorage) GetTable() string {
 	return a.table
 }
 
-func (a *AccountStorage) Close() error {
-	return a.db.Close(context.Background())
+func (a *AccountStorage) Close() {
+	a.db.Close()
 }
 
 func (a *AccountStorage) Add(url string, ownerId int) (account.Account, error) {
 	var id int
 	query := a.db.QueryRow(context.Background(), fmt.Sprintf(`INSERT INTO %s (game_id, friendly_name, owner_id, url, energy_limit)
 	 VALUES (%d, '%s', %d, '%s', %d) RETURNING id`, a.table, 0, "New account", ownerId, url, 1000))
-
 	err := query.Scan(&id)
 	if err != nil {
 		return account.Account{}, nil

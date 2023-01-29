@@ -34,8 +34,7 @@ func (f *FakeAccountStorage) GetTable() string {
 	return "FakeTable"
 }
 
-func (f *FakeAccountStorage) Close() error {
-	return nil
+func (f *FakeAccountStorage) Close() {
 }
 
 func (f *FakeAccountStorage) Add(url string, ownerId int) (account.Account, error) {

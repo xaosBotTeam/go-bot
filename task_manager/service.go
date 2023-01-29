@@ -93,7 +93,7 @@ func (t *TaskManager) Start() error {
 						currentStatus, err := t.GetStatusById(acc.ID)
 						oldStatus := currentStatus
 						if err != nil {
-							log.Printf("ERR: Task Manager: %s", err.Error())
+							log.Printf("%sERR: Task Manager: %s", acc.FriendlyName, err.Error())
 						}
 						oldAcc := acc
 						for _, collector := range t.collectors[acc.ID] {
