@@ -1,4 +1,4 @@
-package info_collector
+package collector
 
 import (
 	"github.com/xaosBotTeam/go-shared-models/account"

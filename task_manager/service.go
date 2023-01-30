@@ -1,10 +1,12 @@
 package task_manager
 
 import (
+	"errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
-	info_collector "go-bot/info-collector"
+	"go-bot/collector"
+	"go-bot/navigation"
 	"go-bot/storage"
 	"go-bot/task"
 	"log"
@@ -21,7 +23,7 @@ func New(accounts storage.AbstractAccountStorage, statuses storage.AbstractStatu
 		statusStorage:  statuses,
 		status:         make(map[int][]task.Abstract),
 		stop:           false, update: make(map[int]bool),
-		collectors: make(map[int][]info_collector.Abstract),
+		collectors: make(map[int][]collector.Abstract),
 	}
 }
 
@@ -31,7 +33,7 @@ type TaskManager struct {
 	status         map[int][]task.Abstract
 	stop           bool
 	update         map[int]bool
-	collectors     map[int][]info_collector.Abstract
+	collectors     map[int][]collector.Abstract
 }
 
 func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
@@ -45,34 +47,28 @@ func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
 	}
 }
 
+func (t *TaskManager) initAccount(acc account.Account) error {
+	status, err := t.statusStorage.GetByAccId(acc.ID)
+	if err == pgx.ErrNoRows {
+		status = models.Status{}
+		err = t.statusStorage.Add(acc.ID, status)
+	} else if err != nil {
+		return err
+	}
+
+	t.status[acc.ID] = StatusToTasks(&status)
+	t.update[acc.ID] = false
+	t.collectors[acc.ID] = collector.NewInfoCollectorList()
+	return nil
+}
+
 func (t *TaskManager) Init() error {
-	ids, statuses, err := t.statusStorage.GetAll()
+	accs, err := t.accountStorage.GetAll()
 	if err != nil {
 		return err
 	}
-	for i, id := range ids {
-		t.status[id] = StatusToTasks(&statuses[i])
-		t.update[id] = false
-		t.collectors[id] = []info_collector.Abstract{
-			&info_collector.Nickname{},
-			&info_collector.GameId{},
-			&info_collector.EnergyLimit{},
-		}
-	}
-	accounts, err := t.accountStorage.GetAll()
-	if err != nil {
-		return err
-	}
-	for _, acc := range accounts {
-		if _, ok := t.status[acc.ID]; !ok {
-			t.status[acc.ID] = make([]task.Abstract, 0)
-			t.update[acc.ID] = false
-			t.collectors[acc.ID] = []info_collector.Abstract{
-				&info_collector.Nickname{},
-				&info_collector.GameId{},
-				&info_collector.EnergyLimit{},
-			}
-		}
+	for _, acc := range accs {
+		err = t.initAccount(acc)
 	}
 	return nil
 }
@@ -98,12 +94,12 @@ func (t *TaskManager) Start() error {
 					currentStatus, err := t.GetStatusById(currentAccount.ID)
 					oldStatus := currentStatus
 					if err != nil {
-						log.Printf("%sERR: Task Manager: %s", currentAccount.FriendlyName, err.Error())
+						log.Printf("ERR: Task Manager: %s", err.Error())
 					}
 					oldAcc := currentAccount
-					for _, collector := range t.collectors[currentAccount.ID] {
-						if collector.CheckCondition() {
-							currentAccount, err = collector.Collect(currentAccount)
+					for _, c := range t.collectors[currentAccount.ID] {
+						if c.CheckCondition() {
+							currentAccount, err = c.Collect(currentAccount)
 							if err != nil {
 								log.Printf("ERR: Task Manager info collecting: %s", err.Error())
 							}
@@ -170,14 +166,12 @@ func (t *TaskManager) Start() error {
 		time.Sleep(30 * time.Second)
 		t.stop = false
 	}
-	return nil
 }
 
 func (t *TaskManager) RefreshAccounts() {
 	t.stop = true
 }
 
-// может стоит возращать прям текущий-текущий из status
 func (t *TaskManager) GetStatusById(id int) (models.Status, error) {
 	return t.statusStorage.GetByAccId(id)
 }
@@ -195,32 +189,15 @@ func (t *TaskManager) GetAllStatuses() (map[int]models.Status, error) {
 }
 
 func (t *TaskManager) AddAccount(url string, ownerId int) (account.Account, error) {
+	if !navigation.ValidateUrl(url) {
+		return account.Account{}, errors.New("url is not valid")
+	}
+
 	acc, err := t.accountStorage.Add(url, ownerId)
 	if err != nil {
 		return account.Account{}, err
 	}
-	status, err := t.statusStorage.GetByAccId(acc.ID)
-	if err == pgx.ErrNoRows {
-		t.status[acc.ID] = make([]task.Abstract, 0)
-		t.update[acc.ID] = false
-		t.collectors[acc.ID] = []info_collector.Abstract{
-			&info_collector.Nickname{},
-			&info_collector.GameId{},
-			&info_collector.EnergyLimit{},
-		}
-		err = t.statusStorage.Add(acc.ID, models.Status{})
-	} else if err != nil {
-		t.status[acc.ID] = StatusToTasks(&status)
-		t.collectors[acc.ID] = []info_collector.Abstract{
-			&info_collector.Nickname{},
-			&info_collector.GameId{},
-			&info_collector.EnergyLimit{},
-		}
-		t.update[acc.ID] = false
-	} else {
-		log.Println(err.Error())
-	}
-	t.update[acc.ID] = false
+	err = t.initAccount(acc)
 	return acc, nil
 }
 

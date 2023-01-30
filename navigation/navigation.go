@@ -150,3 +150,19 @@ func GetByClassAndImage(doc *goquery.Document, class string, imageName string) (
 	})
 	return newDoc, finalError
 }
+
+func ValidateUrl(url string) bool {
+	body, err := http_bridge.GetBodyBytes(url)
+	if err != nil {
+		return false
+	}
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return false
+	}
+	doc, err = GoToMainPagePyMenuLink(doc)
+	if err != nil {
+		return false
+	}
+	return IsMainPage(doc)
+}
