@@ -2,6 +2,7 @@ package task_manager
 
 import (
 	"errors"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jackc/pgx/v5"
 	"github.com/xaosBotTeam/go-shared-models/account"
 	models "github.com/xaosBotTeam/go-shared-models/task"
@@ -91,42 +92,23 @@ func (t *TaskManager) Start() error {
 			wg.Add(1)
 			go func() {
 				for {
+					oldAccount := currentAccount
+					currentAccount, err := t.IterateCollectors(currentAccount)
+					if err != nil {
+						log.Printf("ERR: Task Manager: Info Collecting: id %d, name %s: %s", acc.ID, acc.FriendlyName, err.Error())
+					}
+					if oldAccount != currentAccount {
+						err = t.accountStorage.Update(currentAccount)
+					}
+
 					currentStatus, err := t.GetStatusById(currentAccount.ID)
 					oldStatus := currentStatus
 					if err != nil {
-						log.Printf("ERR: Task Manager: %s", err.Error())
+						log.Printf("ERR: Task Manager: try to get current status: %s", err.Error())
 					}
-					oldAcc := currentAccount
-					for _, c := range t.collectors[currentAccount.ID] {
-						if c.CheckCondition() {
-							currentAccount, err = c.Collect(currentAccount)
-							if err != nil {
-								log.Printf("ERR: Task Manager info collecting: %s", err.Error())
-							}
-						}
-					}
-
-					if oldAcc != currentAccount {
-						err = t.accountStorage.Update(currentAccount)
-						if err != nil {
-							log.Printf("ERR: Task Manager: updating account after collecting info: %s", err.Error())
-						}
-					}
-
-					for _, currentTask := range tasks {
-						if currentTask.CheckCondition() {
-							log.Printf("Task %s started on account id %d, nickname %s", currentTask.GetName(), currentAccount.ID, currentAccount.FriendlyName)
-
-							err = currentTask.Do(currentAccount)
-							if err != nil {
-								log.Printf("ERR: Task Manager, task %s: %s\n", currentTask.GetName(), err.Error())
-							}
-							if !currentTask.IsPersistent() {
-								currentStatus = currentTask.RemoveFromStatus(currentStatus)
-							}
-
-							log.Printf("Task %s ended on account id %d, nickname %s", currentTask.GetName(), currentAccount.ID, currentAccount.FriendlyName)
-						}
+					currentStatus, err = t.IterateTasks(currentAccount, tasks, currentStatus)
+					if err != nil {
+						log.Printf("ERR: Task Manager %s", err.Error())
 					}
 
 					if currentStatus != oldStatus && !t.update[currentAccount.ID] {
@@ -207,4 +189,39 @@ func (t *TaskManager) GetAllAccounts() ([]account.Account, error) {
 
 func (t *TaskManager) GetAccountById(id int) (account.Account, error) {
 	return t.accountStorage.GetById(id)
+}
+
+func (t *TaskManager) IterateCollectors(acc account.Account) (account.Account, error) {
+	var finalErr error
+	for _, c := range t.collectors[acc.ID] {
+		var err error
+		if c.CheckCondition() {
+			acc, err = c.Collect(acc)
+			if err != nil {
+				finalErr = multierror.Append(finalErr, err)
+			}
+		}
+	}
+
+	return acc, finalErr
+}
+
+func (t *TaskManager) IterateTasks(acc account.Account, tasks []task.Abstract, currentStatus models.Status) (models.Status, error) {
+	var finalErr error
+	for _, currentTask := range tasks {
+		if currentTask.CheckCondition() {
+			log.Printf("Task %s started on account id %d, nickname %s", currentTask.GetName(), acc.ID, acc.FriendlyName)
+
+			err := currentTask.Do(acc)
+			if err != nil {
+				finalErr = multierror.Append(finalErr, err)
+			}
+			if !currentTask.IsPersistent() {
+				currentStatus = currentTask.RemoveFromStatus(currentStatus)
+			}
+
+			log.Printf("Task %s ended on account id %d, nickname %s", currentTask.GetName(), acc.ID, acc.FriendlyName)
+		}
+	}
+	return currentStatus, finalErr
 }

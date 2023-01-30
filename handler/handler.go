@@ -98,7 +98,7 @@ func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 // @ID				restart-task-manager
 // @Tags			General
 //
-// @Router			/refresh [get]
+// @Router			/refresh [patch]
 func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
 	b.service.RefreshAccounts()
 	return c.Status(http.StatusOK).JSON("Refresh request sent to task manager")
