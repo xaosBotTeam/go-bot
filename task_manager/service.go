@@ -83,6 +83,11 @@ func (t *TaskManager) Start() error {
 		if err != nil {
 			return err
 		}
+
+		for _, acc := range accounts {
+			t.update[acc.ID] = false
+		}
+
 		var wg sync.WaitGroup
 		for _, acc := range accounts {
 			tasks, ok := t.status[acc.ID]
