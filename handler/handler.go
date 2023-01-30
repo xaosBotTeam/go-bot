@@ -37,19 +37,19 @@ func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Can't parse account id")
+		return c.Status(http.StatusBadRequest).JSON("Can't parse account id")
 	}
 	var status models.Status
 	err = json.Unmarshal(c.Body(), &status)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Can't parse body")
+		return c.Status(http.StatusBadRequest).JSON("Can't parse body")
 	}
 
 	err = b.service.UpdateStatus(id, status)
 	if err == pgx.ErrNoRows {
-		return c.Status(fiber.StatusNotFound).SendString("Can't find account with such id")
+		return c.Status(fiber.StatusNotFound).JSON("Can't find account with such id")
 	} else if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Something doesn't work")
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 
 	return c.SendStatus(http.StatusOK)
@@ -65,13 +65,13 @@ func (b *BotController) PutAccountTaskConfig(c *fiber.Ctx) error {
 func (b *BotController) GetAccountStatusById(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("Can't parse account id")
+		return c.Status(fiber.StatusBadRequest).JSON("Can't parse account id")
 	}
 	status, err := b.service.GetStatusById(id)
 	if err == pgx.ErrNoRows {
-		return c.Status(fiber.StatusNotFound).SendString("Can't find account with such id")
+		return c.Status(fiber.StatusNotFound).JSON("Can't find account with such id")
 	} else if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Something doesn't work")
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 	return c.JSON(status)
 }
@@ -86,9 +86,9 @@ func (b *BotController) GetAccountStatusById(c *fiber.Ctx) error {
 func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 	statuses, err := b.service.GetAllStatuses()
 	if err == pgx.ErrNoRows {
-		return c.Status(fiber.StatusNotFound).SendString("There are no statuses in storage, please, add at least one")
+		return c.Status(fiber.StatusNotFound).JSON("There are no statuses in storage, please, add at least one")
 	} else if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Something doesn't work")
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 	return c.JSON(statuses)
 }
@@ -101,14 +101,14 @@ func (b *BotController) GetAllStatuses(c *fiber.Ctx) error {
 // @Router			/refresh [get]
 func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
 	b.service.RefreshAccounts()
-	return c.Status(http.StatusOK).SendString("Refresh request sent to task manager")
+	return c.Status(http.StatusOK).JSON("Refresh request sent to task manager")
 }
 
 // @Summary		Add new game account
 // @ID				add-new-game-account
 //
 // @Tags 			Account
-// @Produce		json
+// @Produce			json
 // @Param			url	query string true "account url"
 // @Param			owner query int true "id of account`s owner"
 // @Router			/account/ [post]
@@ -117,15 +117,15 @@ func (b *BotController) AddAccount(c *fiber.Ctx) error {
 	url := c.Query("url")
 	ownerId, err := strconv.Atoi(c.Query("owner"))
 	if url == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Url parameter is empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Url parameter is empty")
 	} else if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("Can't parse ownerId parameter")
+		return c.Status(fiber.StatusBadRequest).JSON("Can't parse ownerId parameter")
 	}
 
 	acc, err := b.service.AddAccount(url, ownerId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Can't add account")
+		return c.Status(fiber.StatusInternalServerError).JSON("Can't add account")
 	}
 
 	return c.JSON(acc)
@@ -141,14 +141,14 @@ func (b *BotController) AddAccount(c *fiber.Ctx) error {
 func (b *BotController) GetAccountById(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("Can't parse account id")
+		return c.Status(fiber.StatusBadRequest).JSON("Can't parse account id")
 	}
 	acc, err := b.service.GetAccountById(id)
 	if err == pgx.ErrNoRows {
-		return c.Status(fiber.StatusNotFound).SendString("Can't find account with such id")
+		return c.Status(fiber.StatusNotFound).JSON("Can't find account with such id")
 	} else if err != nil {
 		log.Printf(err.Error())
-		return c.Status(fiber.StatusInternalServerError).SendString("Something doesn't work")
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 	return c.JSON(acc)
 }
@@ -162,9 +162,9 @@ func (b *BotController) GetAccountById(c *fiber.Ctx) error {
 func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 	accs, err := b.service.GetAllAccounts()
 	if err == pgx.ErrNoRows {
-		return c.Status(fiber.StatusNotFound).SendString("There are no accounts in storage, please, add at least one")
+		return c.Status(fiber.StatusNotFound).JSON("There are no accounts in storage, please, add at least one")
 	} else if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Something doesn't work")
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 	return c.JSON(accs)
 }

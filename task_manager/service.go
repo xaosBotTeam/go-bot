@@ -114,6 +114,8 @@ func (t *TaskManager) Start() error {
 
 					for _, currentTask := range tasks {
 						if currentTask.CheckCondition() {
+							log.Printf("Task %s started on account id %d, nickname %s", currentTask.GetName(), currentAccount.ID, currentAccount.FriendlyName)
+
 							err = currentTask.Do(currentAccount)
 							if err != nil {
 								log.Printf("ERR: Task Manager, task %s: %s\n", currentTask.GetName(), err.Error())
@@ -122,7 +124,7 @@ func (t *TaskManager) Start() error {
 								currentStatus = currentTask.RemoveFromStatus(currentStatus)
 							}
 
-							log.Printf("Task %s ended", currentTask.GetName())
+							log.Printf("Task %s ended on account id %d, nickname %s", currentTask.GetName(), currentAccount.ID, currentAccount.FriendlyName)
 						}
 					}
 
@@ -195,8 +197,21 @@ func (t *TaskManager) AddAccount(url string, ownerId int) (account.Account, erro
 	status, err := t.statusStorage.GetByAccId(acc.ID)
 	if err == pgx.ErrNoRows {
 		t.status[acc.ID] = make([]task.Abstract, 0)
+		t.update[acc.ID] = false
+		t.collectors[acc.ID] = []info_collector.Abstract{
+			&info_collector.Nickname{},
+			&info_collector.GameId{},
+			&info_collector.EnergyLimit{},
+		}
+		err = t.statusStorage.Add(acc.ID, models.Status{})
 	} else if err != nil {
 		t.status[acc.ID] = StatusToTasks(&status)
+		t.collectors[acc.ID] = []info_collector.Abstract{
+			&info_collector.Nickname{},
+			&info_collector.GameId{},
+			&info_collector.EnergyLimit{},
+		}
+		t.update[acc.ID] = false
 	} else {
 		log.Println(err.Error())
 	}
