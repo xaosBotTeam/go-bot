@@ -1,2 +1,4 @@
 .idea
 build
+bot_test.go
+.vscode
