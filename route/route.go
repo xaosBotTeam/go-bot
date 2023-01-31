@@ -21,17 +21,21 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 
 	app.Patch("/refresh", controller.RestartTaskManager)
 
-	taskApi := app.Group("/task")
-	taskApi.Get("/", controller.GetAllStatuses)
-	taskApi.Put("/", controller.ApplyStatusForAllAccounts)
+	taskApi := app.Group("/config")
+	taskApi.Get("/", controller.GetAllConfigs)
+	taskApi.Put("/", controller.SetConfigForAll)
 
-	taskApi.Get("/:id", controller.GetAccountStatusById)
-	taskApi.Put("/:id", controller.PutAccountTaskConfig)
+	taskApi.Get("/:id", controller.GetConfigById)
+	taskApi.Put("/:id", controller.UpdateConfig)
 
 	accountApi := app.Group("/account")
 	accountApi.Get("/", controller.GetAllAccounts)
 	accountApi.Get("/:id", controller.GetAccountById)
 	accountApi.Post("/", controller.AddAccount)
+	
+	statusApi := app.Group("/status")
+	statusApi.Get("/", controller.GetAllStatuses)
+	statusApi.Get("/:id", controller.GetStatus)
 
 	app.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusNotFound)

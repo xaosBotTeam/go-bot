@@ -20,11 +20,8 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
     id  		  SERIAL PRIMARY KEY,
-	game_id       int NOT NULL,
-	friendly_name text NOT NULL,
 	owner_id      int NOT NULL,
-	url           text NOT NULL,
-	energy_limit  int NOT NULL)`, table)
+	url           text NOT NULL)`, table)
 
 	_, err = conn.Exec(context.Background(), createSchemaString)
 	if err != nil {
@@ -40,12 +37,11 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 }
 
 type AbstractAccountStorage interface {
-	GetAll() ([]account.Account, error)
+	GetAll() (map[int]account.Account, error)
 	GetById(id int) (account.Account, error)
-	GetTable() string
 	Close()
-	Add(url string, ownerId int) (account.Account, error)
-	Update(acc account.Account) error
+	Add(acc account.Account) (int, error)
+	Update(id int, acc account.Account) error
 }
 
 type AccountStorage struct {
@@ -53,38 +49,27 @@ type AccountStorage struct {
 	table string
 }
 
-func (a *AccountStorage) GetAll() ([]account.Account, error) {
-	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`, a.table))
-	var amountAccounts int
-	err := row.Scan(&amountAccounts)
-	if err != nil {
-		return nil, err
-	}
-
+func (a *AccountStorage) GetAll() (map[int]account.Account, error) {
 	rows, err := a.db.Query(context.Background(), fmt.Sprintf(`SELECT * FROM %s`, a.table))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	accounts := make([]account.Account, amountAccounts)
+	accounts := make(map[int]account.Account)
 
 	var (
-		id, gameId, ownerId, energyLimit int
-		friendlyName, url                string
+		id, ownerId int
+		url         string
 	)
 
-	for i := 0; rows.Next(); i++ {
-		err = rows.Scan(&id, &gameId, &friendlyName, &ownerId, &url, &energyLimit)
+	for rows.Next() {
+		err = rows.Scan(&id, &ownerId, &url)
 		if err != nil {
 			return nil, err
 		}
-		accounts[i] = account.Account{
-			ID:           id,
-			GameID:       gameId,
-			FriendlyName: friendlyName,
-			Owner:        ownerId,
-			URL:          url,
-			EnergyLimit:  energyLimit,
+		accounts[id] = account.Account{
+			Owner: ownerId,
+			URL:   url,
 		}
 	}
 	return accounts, nil
@@ -92,51 +77,36 @@ func (a *AccountStorage) GetAll() ([]account.Account, error) {
 
 func (a *AccountStorage) GetById(id int) (account.Account, error) {
 	var (
-		gameId, ownerId, energyLimit int
-		friendlyName, url            string
+		ownerId int
+		url            string
 	)
-	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT game_id, friendly_name, owner_id, url, energy_limit FROM %s WHERE id = %d`, a.table, id))
-	err := row.Scan(&gameId, &friendlyName, &ownerId, &url, &energyLimit)
+	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT owner_id, url FROM %s WHERE id = %d`, a.table, id))
+	err := row.Scan(&ownerId, &url)
 	if err != nil {
 		return account.Account{}, err
 	}
 	return account.Account{
-		ID:           id,
-		GameID:       gameId,
-		FriendlyName: friendlyName,
-		Owner:        ownerId,
-		URL:          url,
+		Owner: ownerId,
+		URL:   url,
 	}, nil
-}
-
-func (a *AccountStorage) GetTable() string {
-	return a.table
 }
 
 func (a *AccountStorage) Close() {
 	a.db.Close()
 }
 
-func (a *AccountStorage) Add(url string, ownerId int) (account.Account, error) {
+func (a *AccountStorage) Add(acc account.Account) (int, error) {
 	var id int
-	query := a.db.QueryRow(context.Background(), fmt.Sprintf(`INSERT INTO %s (game_id, friendly_name, owner_id, url, energy_limit)
-	 VALUES (%d, '%s', %d, '%s', %d) RETURNING id`, a.table, 0, "New account", ownerId, url, 1000))
+	query := a.db.QueryRow(context.Background(), fmt.Sprintf(`INSERT INTO %s (owner_id, url) VALUES (%d, '%s')
+                               RETURNING id`, a.table, acc.Owner, acc.URL))
 	err := query.Scan(&id)
 	if err != nil {
-		return account.Account{}, nil
+		return 0, nil
 	}
-	return account.Account{
-		ID:           id,
-		GameID:       0,
-		FriendlyName: "New account",
-		Owner:        ownerId,
-		URL:          url,
-		EnergyLimit:  1000,
-	}, nil
+	return id, nil
 }
 
-func (a *AccountStorage) Update(acc account.Account) error {
-	_, err := a.db.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET (game_id, friendly_name, owner_id, url, energy_limit) =
-    (%d, '%s',%d, '%s', %d) WHERE id = %d`, a.table, acc.GameID, acc.FriendlyName, acc.Owner, acc.URL, acc.EnergyLimit, acc.ID))
+func (a *AccountStorage) Update(id int, acc account.Account) error {
+	_, err := a.db.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET (owner_id, url) = (%d, '%s') WHERE id = %d`, a.table, acc.Owner, acc.URL, id))
 	return err
 }

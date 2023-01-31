@@ -1,9 +1,11 @@
 package collector
 
-import "github.com/xaosBotTeam/go-shared-models/account"
+import (
+	models "github.com/xaosBotTeam/go-shared-models/status"
+)
 
 type Abstract interface {
-	Collect(acc account.Account) (account.Account, error)
+	Collect(config models.Status, url string) (models.Status, error)
 	CheckCondition() bool
 }
 

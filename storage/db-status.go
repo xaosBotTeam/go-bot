@@ -2,25 +2,21 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
 	"github.com/jackc/pgx/v5/pgxpool"
-	models "github.com/xaosBotTeam/go-shared-models/task"
+	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
 type AbstractStatusStorage interface {
-	GetAll() ([]int, []models.Status, error)
-	GetByAccId(id int) (models.Status, error)
-	Update(id int, status models.Status) error
-	UpdateRange(ids []int, status models.Status) error
-	Delete(id int) error
-	Add(id int, status models.Status) error
+	GetById(id int) (status.Status, error)
+	GetAll() (map[int]status.Status, error)
+	Update(id int, stat status.Status) error
+	Add(id int, stat status.Status) error
 	Close()
 }
 
-func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
-	conn, err := pgxpool.New(context.Background(), connString)
+func NewStatusStorage(connStr string) (*StatusStorage, error) {
+	conn, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +27,10 @@ func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
 	table := "bot.Status"
 	createSchemaString := `CREATE SCHEMA IF NOT EXISTS bot`
 	createTableString := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-    id int PRIMARY KEY,
-	status json)`, table)
+    id  		  int PRIMARY KEY,
+	game_id      int NOT NULL,
+	friendly_name           text NOT NULL,
+	energy_limit int NOT NULL)`, table)
 
 	_, err = conn.Exec(context.Background(), createSchemaString)
 	if err != nil {
@@ -43,106 +41,69 @@ func NewStatusStorage(connString string) (AbstractStatusStorage, error) {
 		return nil, err
 	}
 
-	return &DbStatusStorage{db: conn,
+	return &StatusStorage{db: conn,
 		table: table}, nil
 }
 
-type DbStatusStorage struct {
+type StatusStorage struct {
 	db    *pgxpool.Pool
 	table string
 }
 
-func (d *DbStatusStorage) GetAll() ([]int, []models.Status, error) {
-	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT COUNT(*) FROM %s`, d.table))
-	var amountRows int
-	err := row.Scan(&amountRows)
+func (s *StatusStorage) GetById(id int) (status.Status, error) {
+	var (
+		gameId, energyLimit int
+		friendlyName        string
+	)
+	row := s.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT game_id, friendly_name, energy_limit FROM %s WHERE id = %d`, s.table, id))
+	err := row.Scan(&gameId, &friendlyName, &energyLimit)
 	if err != nil {
-		return nil, nil, err
+		return status.Status{}, err
 	}
-	rows, err := d.db.Query(context.Background(), fmt.Sprintf(`SELECT * FROM %s`, d.table))
+	return status.Status{
+		GameID:       gameId,
+		FriendlyName: friendlyName,
+		EnergyLimit:  energyLimit,
+	}, nil
+}
+
+func (s *StatusStorage) GetAll() (map[int]status.Status, error) {
+	rows, err := s.db.Query(context.Background(), fmt.Sprintf(`SELECT * FROM %s`, s.table))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer rows.Close()
-	statuses := make([]models.Status, amountRows)
-	ids := make([]int, amountRows)
+	statuses := make(map[int]status.Status)
+
 	var (
-		id            int
-		statusJsonStr string
-		status        models.Status
+		id, gameId, energyLimit int
+		friendlyName            string
 	)
 
-	for i := 0; rows.Next(); i++ {
-		err = rows.Scan(&id, &statusJsonStr)
+	for rows.Next() {
+		err = rows.Scan(&id, &gameId, &friendlyName, &energyLimit)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		err = json.Unmarshal([]byte(statusJsonStr), &status)
-		if err != nil {
-			return nil, nil, err
+		statuses[id] = status.Status{
+			GameID:       gameId,
+			FriendlyName: friendlyName,
+			EnergyLimit:  energyLimit,
 		}
-
-		statuses[i] = status
-		ids[i] = id
 	}
-	return ids, statuses, nil
+	return statuses, nil
 }
 
-func (d *DbStatusStorage) GetByAccId(id int) (models.Status, error) {
-	var (
-		statusJsonStr string
-		status        models.Status
-	)
-
-	row := d.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT status FROM %s WHERE id = %d`, d.table, id))
-	err := row.Scan(&statusJsonStr)
-	if err != nil {
-		return models.Status{}, err
-	}
-
-	err = json.Unmarshal([]byte(statusJsonStr), &status)
-	if err != nil {
-		return models.Status{}, err
-	}
-
-	return status, nil
-}
-
-func (d *DbStatusStorage) Update(id int, status models.Status) error {
-	jsonStr, err := json.Marshal(status)
-	if err != nil {
-		return err
-	}
-	_, err = d.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET status = '%s' WHERE id = %d", d.table, jsonStr, id))
+func (s *StatusStorage) Update(id int, stat status.Status) error {
+	_, err := s.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET (game_id, friendly_name, energy_limit) = (%d, '%s', %d) WHERE id = %d", s.table, stat.GameID, stat.FriendlyName, stat.EnergyLimit, id))
 	return err
 }
 
-func (d *DbStatusStorage) Delete(id int) error {
-	_, err := d.db.Exec(context.Background(), fmt.Sprintf("DELETE FROM %s WHERE id = %d", d.table, id))
+func (s *StatusStorage) Add(id int, stat status.Status) error {
+	_, err := s.db.Exec(context.Background(), fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, '%s', %d)", s.table, id, stat.GameID, stat.FriendlyName, stat.EnergyLimit))
 	return err
 }
 
-func (d *DbStatusStorage) Add(id int, status models.Status) error {
-	jsonStr, err := json.Marshal(status)
-	if err != nil {
-		return err
-	}
-	_, err = d.db.Exec(context.Background(), fmt.Sprintf("INSERT INTO %s VALUES (%d, '%s')", d.table, id, string(jsonStr)))
-	return err
-}
-
-func (d *DbStatusStorage) Close() {
-	d.db.Close()
-}
-
-func (d *DbStatusStorage) UpdateRange(ids []int, status models.Status) error {
-	jsonStr, err := json.Marshal(status)
-	if err != nil {
-		return err
-	}
-	_, err = d.db.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET status = '%s'`, d.table, jsonStr))
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *StatusStorage) Close() {
+	s.db.Close()
 }

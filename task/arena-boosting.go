@@ -1,22 +1,24 @@
 package task
 
 import (
-	"github.com/PuerkitoBio/goquery"
-	"github.com/xaosBotTeam/go-shared-models/account"
-	models "github.com/xaosBotTeam/go-shared-models/task"
 	"go-bot/navigation"
 	"go-bot/random"
 	"go-bot/resources"
 	"strconv"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/config"
+	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
 var _ Abstract = (*ArenaBoosting)(nil)
 
-func NewArenaBoosting(status *models.Status) *ArenaBoosting {
-	if status.ArenaFarming {
+func NewArenaBoosting(configuration config.Config) *ArenaBoosting {
+	if configuration.ArenaFarming {
 		return &ArenaBoosting{
-			UseEnergyCans: status.ArenaUseEnergyCans,
+			UseEnergyCans: configuration.ArenaUseEnergyCans,
 		}
 	}
 	return nil
@@ -26,7 +28,7 @@ type ArenaBoosting struct {
 	UseEnergyCans bool
 }
 
-func (t *ArenaBoosting) Do(acc account.Account) error {
+func (t *ArenaBoosting) Do(acc account.Account, s status.Status) error {
 	doc, err := navigation.GetPage(acc.URL)
 	if err != nil {
 		return err
@@ -38,13 +40,13 @@ func (t *ArenaBoosting) Do(acc account.Account) error {
 	for energyEnough {
 		doc, err = navigation.GoByClass(doc, resources.HtmlArenaGoldButton)
 		if navigation.IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
-			doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
+			doc, energyEnough, err = t.restoreEnergy(doc, s.EnergyLimit)
 		} else if err == navigation.ErrNotFound && navigation.IsTopTitleContains(doc, "Арена Смерти") {
 			doc, err = navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlArenaSkipButton, resources.HtmlAnotherRival)
 			if err != nil {
 				return err
 			}
-			doc, energyEnough, err = t.restoreEnergy(doc, acc.EnergyLimit)
+			doc, energyEnough, err = t.restoreEnergy(doc, s.EnergyLimit)
 			if err != nil {
 				return err
 			}
@@ -103,9 +105,9 @@ func (t *ArenaBoosting) IsPersistent() bool {
 	return false
 }
 
-func (t *ArenaBoosting) RemoveFromStatus(status models.Status) models.Status {
-	status.ArenaFarming = false
-	return status
+func (t *ArenaBoosting) RemoveFromStatus(configuration config.Config) config.Config {
+	configuration.ArenaFarming = false
+	return configuration
 }
 
 func (t *ArenaBoosting) restoreCharacterHealthReturnToArena(doc *goquery.Document) (*goquery.Document, error) {

@@ -1,7 +1,7 @@
 package collector
 
 import (
-	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/status"
 	"go-bot/navigation"
 	"strconv"
 	"time"
@@ -17,18 +17,18 @@ type EnergyLimit struct {
 	lastSync time.Time
 }
 
-func (e *EnergyLimit) Collect(acc account.Account) (account.Account, error) {
-	doc, err := navigation.GetPage(acc.URL)
+func (e *EnergyLimit) Collect(acc status.Status, url string) (status.Status, error) {
+	doc, err := navigation.GetPage(url)
 	if err != nil {
-		return account.Account{}, err
+		return acc, err
 	}
 	energyLimitStr, err := navigation.GetTopBarValue(doc, 1)
 	if err != nil {
-		return account.Account{}, err
+		return acc, err
 	}
 	energyLimit, err := strconv.Atoi(energyLimitStr)
 	if err != nil {
-		return account.Account{}, err
+		return acc, err
 	}
 	if acc.EnergyLimit < energyLimit {
 		acc.EnergyLimit = energyLimit

@@ -28,14 +28,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	configStorage, err := storage.NewConfigStorage(conn)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	statusStorage, err := storage.NewStatusStorage(conn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	defer accountStorage.Close()
-	defer statusStorage.Close()
-	taskManager := task_manager.New(accountStorage, statusStorage)
+	defer configStorage.Close()
+	taskManager := task_manager.New(accountStorage, configStorage, statusStorage)
 	controller := handler.New(taskManager)
 
 	route.InitRoutes(app, controller)

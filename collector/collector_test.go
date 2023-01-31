@@ -1,22 +1,19 @@
 package collector
 
 import (
-	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/status"
 	"os"
 	"testing"
 )
 
 func TestNicknameCollector(t *testing.T) {
 	collector := Nickname{}
-	acc := account.Account{
-		ID:           0,
+	acc := status.Status{
 		GameID:       0,
 		FriendlyName: "",
-		Owner:        0,
-		URL:          os.Getenv("XAOSBOT_TEST_ACC_URL"),
 		EnergyLimit:  0,
 	}
-	acc, err := collector.Collect(acc)
+	acc, err := collector.Collect(acc, os.Getenv("XAOSBOT_TEST_ACC_URL"))
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -27,15 +24,12 @@ func TestNicknameCollector(t *testing.T) {
 
 func TestEnergyLimit(t *testing.T) {
 	collector := EnergyLimit{}
-	acc := account.Account{
-		ID:           0,
+	acc := status.Status{
 		GameID:       0,
 		FriendlyName: "",
-		Owner:        0,
-		URL:          os.Getenv("XAOSBOT_TEST_ACC_URL"),
 		EnergyLimit:  0,
 	}
-	acc, err := collector.Collect(acc)
+	acc, err := collector.Collect(acc, os.Getenv("XAOSBOT_TEST_ACC_URL"))
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -46,15 +40,12 @@ func TestEnergyLimit(t *testing.T) {
 
 func TestGameId(t *testing.T) {
 	collector := GameId{}
-	acc := account.Account{
-		ID:           0,
+	acc := status.Status{
 		GameID:       0,
 		FriendlyName: "",
-		Owner:        0,
-		URL:          os.Getenv("XAOSBOT_TEST_ACC_URL"),
 		EnergyLimit:  0,
 	}
-	acc, err := collector.Collect(acc)
+	acc, err := collector.Collect(acc, os.Getenv("XAOSBOT_TEST_ACC_URL"))
 	if err != nil {
 		t.Fatal(err.Error())
 	}

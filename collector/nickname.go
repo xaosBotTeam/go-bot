@@ -1,7 +1,7 @@
 package collector
 
 import (
-	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/status"
 	"go-bot/navigation"
 	"go-bot/resources"
 	"strings"
@@ -18,14 +18,14 @@ type Nickname struct {
 	lastSync time.Time
 }
 
-func (n *Nickname) Collect(acc account.Account) (account.Account, error) {
-	doc, err := navigation.GetPage(acc.URL)
+func (n *Nickname) Collect(acc status.Status, url string) (status.Status, error) {
+	doc, err := navigation.GetPage(url)
 	if err != nil {
-		return account.Account{}, err
+		return acc, err
 	}
 	doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlCharacter)
 	if err != nil {
-		return account.Account{}, err
+		return acc, err
 	}
 	acc.FriendlyName = strings.TrimSpace(strings.Split(navigation.GetTopTitle(doc), ",")[0])
 	return acc, nil

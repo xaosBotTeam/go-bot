@@ -1,14 +1,15 @@
 package task
 
 import (
-	account "github.com/xaosBotTeam/go-shared-models/account"
-	models "github.com/xaosBotTeam/go-shared-models/task"
+	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/config"
+	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
 type Abstract interface {
 	CheckCondition() bool
-	Do(acc account.Account) error
+	Do(acc account.Account, status status.Status) error
 	IsPersistent() bool
 	GetName() string
-	RemoveFromStatus(status models.Status) models.Status
+	RemoveFromStatus(configuration config.Config) config.Config
 }
