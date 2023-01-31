@@ -49,3 +49,10 @@ func (f *FakeStatusStorage) Add(id int, status models.Status) error {
 
 func (f *FakeStatusStorage) Close() {
 }
+
+func (f *FakeStatusStorage) UpdateRange(ids []int, status models.Status) error {
+	for _, id := range ids {
+		f.statuses[id] = status
+	}
+	return nil
+}

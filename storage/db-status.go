@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	models "github.com/xaosBotTeam/go-shared-models/task"
 )
@@ -12,6 +13,7 @@ type AbstractStatusStorage interface {
 	GetAll() ([]int, []models.Status, error)
 	GetByAccId(id int) (models.Status, error)
 	Update(id int, status models.Status) error
+	UpdateRange(ids []int, status models.Status) error
 	Delete(id int) error
 	Add(id int, status models.Status) error
 	Close()
@@ -131,4 +133,16 @@ func (d *DbStatusStorage) Add(id int, status models.Status) error {
 
 func (d *DbStatusStorage) Close() {
 	d.db.Close()
+}
+
+func (d *DbStatusStorage) UpdateRange(ids []int, status models.Status) error {
+	jsonStr, err := json.Marshal(status)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET status = '%s'`, d.table, jsonStr))
+	if err != nil {
+		return err
+	}
+	return nil
 }

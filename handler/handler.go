@@ -104,7 +104,7 @@ func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON("Refresh request sent to task manager")
 }
 
-// @Summary		Add new game account
+// @Summary			Add new game account
 // @ID				add-new-game-account
 //
 // @Tags 			Account
@@ -167,4 +167,32 @@ func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
 	}
 	return c.JSON(accs)
+}
+
+
+//	@Summary		Update status for all
+//	@Description	get status for all
+//	@ID				update-status-for-all
+//
+// @Tags 			Task
+// @Accept 			json
+// @Param 			config body models.Status true "new config"
+// @Router			/task/ [put]
+func (b *BotController) ApplyStatusForAllAccounts(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	
+	var status models.Status
+	err := json.Unmarshal(c.Body(), &status)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON("Can't parse body")
+	}
+
+	err = b.service.SetStatusForAllAccount(status)
+	if err == pgx.ErrNoRows {
+		return c.Status(fiber.StatusNotFound).JSON("Can't find account with such id")
+	} else if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
+	}
+
+	return c.SendStatus(http.StatusOK)
 }

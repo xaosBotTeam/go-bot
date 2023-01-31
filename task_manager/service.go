@@ -22,7 +22,6 @@ func New(accounts storage.AbstractAccountStorage, statuses storage.AbstractStatu
 	return &TaskManager{
 		accountStorage: accounts,
 		statusStorage:  statuses,
-		status:         make(map[int][]task.Abstract),
 		stop:           false, update: make(map[int]bool),
 		collectors: make(map[int][]collector.Abstract),
 	}
@@ -31,17 +30,15 @@ func New(accounts storage.AbstractAccountStorage, statuses storage.AbstractStatu
 type TaskManager struct {
 	accountStorage storage.AbstractAccountStorage
 	statusStorage  storage.AbstractStatusStorage
-	status         map[int][]task.Abstract
 	stop           bool
 	update         map[int]bool
 	collectors     map[int][]collector.Abstract
 }
 
 func (t *TaskManager) UpdateStatus(accountId int, status models.Status) error {
-	t.status[accountId] = StatusToTasks(&status)
 	t.update[accountId] = true
 	_, err := t.statusStorage.GetByAccId(accountId)
-	if err != nil && err.Error() == "no rows in result set" {
+	if err != nil && err == pgx.ErrNoRows {
 		return t.statusStorage.Add(accountId, status)
 	} else {
 		return t.statusStorage.Update(accountId, status)
@@ -53,11 +50,13 @@ func (t *TaskManager) initAccount(acc account.Account) error {
 	if err == pgx.ErrNoRows {
 		status = models.Status{}
 		err = t.statusStorage.Add(acc.ID, status)
+		if err != nil {
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
 
-	t.status[acc.ID] = StatusToTasks(&status)
 	t.update[acc.ID] = false
 	t.collectors[acc.ID] = collector.NewInfoCollectorList()
 	return nil
@@ -70,6 +69,9 @@ func (t *TaskManager) Init() error {
 	}
 	for _, acc := range accs {
 		err = t.initAccount(acc)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -87,61 +89,8 @@ func (t *TaskManager) Start() error {
 
 		var wg sync.WaitGroup
 		for _, acc := range accounts {
-			tasks, ok := t.status[acc.ID]
-			currentAccount := acc
 			wg.Add(1)
-			go func() {
-				for {
-					oldAccount := currentAccount
-					currentAccount, err := t.IterateCollectors(currentAccount)
-					if err != nil {
-						log.Printf("ERR: Task Manager: Info Collecting: id %d, name %s: %s", acc.ID, acc.FriendlyName, err.Error())
-					}
-					if oldAccount != currentAccount {
-						err = t.accountStorage.Update(currentAccount)
-					}
-
-					currentStatus, err := t.GetStatusById(currentAccount.ID)
-					oldStatus := currentStatus
-					if err != nil {
-						log.Printf("ERR: Task Manager: try to get current status: %s", err.Error())
-					}
-					currentStatus, err = t.IterateTasks(currentAccount, tasks, currentStatus)
-					if err != nil {
-						log.Printf("ERR: Task Manager %s", err.Error())
-					}
-
-					if currentStatus != oldStatus && !t.update[currentAccount.ID] {
-						err = t.statusStorage.Update(currentAccount.ID, currentStatus)
-						if err != nil && err == pgx.ErrNoRows {
-							err = t.statusStorage.Add(currentAccount.ID, currentStatus)
-						}
-						if err != nil {
-							log.Printf("ERR: Task Manager: %s", err.Error())
-						}
-						t.status[currentAccount.ID] = StatusToTasks(&currentStatus)
-						if err != nil {
-							log.Printf("ERR: Task Manager: %s", err.Error())
-						}
-					}
-
-					if t.stop {
-						wg.Done()
-						return
-					}
-
-					tasks, ok = t.status[currentAccount.ID]
-					if t.update[currentAccount.ID] {
-						t.update[currentAccount.ID] = false
-					}
-					if !ok || len(tasks) == 0 {
-						wg.Done()
-						return
-					}
-
-					time.Sleep(1 * time.Second)
-				}
-			}()
+			go t.servingLoop(acc, &wg)
 		}
 		wg.Wait()
 		log.Printf("Restart tasks in 30 seconds...")
@@ -180,7 +129,7 @@ func (t *TaskManager) AddAccount(url string, ownerId int) (account.Account, erro
 		return account.Account{}, err
 	}
 	err = t.initAccount(acc)
-	return acc, nil
+	return acc, err
 }
 
 func (t *TaskManager) GetAllAccounts() ([]account.Account, error) {
@@ -191,7 +140,7 @@ func (t *TaskManager) GetAccountById(id int) (account.Account, error) {
 	return t.accountStorage.GetById(id)
 }
 
-func (t *TaskManager) IterateCollectors(acc account.Account) (account.Account, error) {
+func (t *TaskManager) iterateCollectors(acc account.Account) (account.Account, error) {
 	var finalErr error
 	for _, c := range t.collectors[acc.ID] {
 		var err error
@@ -206,7 +155,7 @@ func (t *TaskManager) IterateCollectors(acc account.Account) (account.Account, e
 	return acc, finalErr
 }
 
-func (t *TaskManager) IterateTasks(acc account.Account, tasks []task.Abstract, currentStatus models.Status) (models.Status, error) {
+func (t *TaskManager) iterateTasks(acc account.Account, tasks []task.Abstract, currentStatus models.Status) (models.Status, error) {
 	var finalErr error
 	for _, currentTask := range tasks {
 		if currentTask.CheckCondition() {
@@ -224,4 +173,76 @@ func (t *TaskManager) IterateTasks(acc account.Account, tasks []task.Abstract, c
 		}
 	}
 	return currentStatus, finalErr
+}
+
+func (t *TaskManager) servingLoop(acc account.Account, wg *sync.WaitGroup) {
+	status, err := t.statusStorage.GetByAccId(acc.ID)
+	if err != nil {
+		log.Printf("ERR: Task Manager: %s", err.Error())
+	}
+	tasks := StatusToTasks(&status)
+	for {
+		oldAccount := acc
+		acc, err = t.iterateCollectors(acc)
+		if err != nil {
+			log.Printf("ERR: Task Manager: Info Collecting: id %d, name %s: %s", acc.ID, acc.FriendlyName, err.Error())
+		}
+		if oldAccount != acc {
+			err = t.accountStorage.Update(acc)
+			if err != nil {
+				log.Printf("ERR: Task Manager: updating main")
+			}
+		}
+
+		oldStatus := status
+		if err != nil {
+			log.Printf("ERR: Task Manager: try to get current status: %s", err.Error())
+		}
+		status, err = t.iterateTasks(acc, tasks, status)
+		if err != nil {
+			log.Printf("ERR: Task Manager %s", err.Error())
+		}
+
+		if status != oldStatus && !t.update[acc.ID] {
+			err = t.statusStorage.Update(acc.ID, status)
+			if err != nil && err == pgx.ErrNoRows {
+				err = t.statusStorage.Add(acc.ID, status)
+			}
+			if err != nil {
+				log.Printf("ERR: Task Manager: %s", err.Error())
+			}
+			if err != nil {
+				log.Printf("ERR: Task Manager: %s", err.Error())
+			}
+		}
+
+		if t.stop {
+			wg.Done()
+			return
+		}
+
+		status, err = t.statusStorage.GetByAccId(acc.ID)
+		if err != nil {
+			log.Printf("ERR: Task Manager: %s", err.Error())
+		}
+		tasks = StatusToTasks(&status)
+
+		if t.update[acc.ID] {
+			t.update[acc.ID] = false
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (t *TaskManager) SetStatusForAllAccount(status models.Status) error {
+	accs, err := t.accountStorage.GetAll()
+	if err != nil {
+		return err
+	}
+	ids := make([]int, len(accs))
+	for _, acc := range accs {
+		ids = append(ids, acc.ID)
+	}
+	return t.statusStorage.UpdateRange(ids, status)
 }

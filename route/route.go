@@ -1,13 +1,14 @@
 package route
 
 import (
+	_ "go-bot/docs"
+	"go-bot/handler"
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/swagger"
-	_ "go-bot/docs"
-	"go-bot/handler"
-	"net/http"
 )
 
 func InitRoutes(app *fiber.App, controller *handler.BotController) {
@@ -22,6 +23,8 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 
 	taskApi := app.Group("/task")
 	taskApi.Get("/", controller.GetAllStatuses)
+	taskApi.Put("/", controller.ApplyStatusForAllAccounts)
+
 	taskApi.Get("/:id", controller.GetAccountStatusById)
 	taskApi.Put("/:id", controller.PutAccountTaskConfig)
 
