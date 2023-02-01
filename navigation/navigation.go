@@ -3,15 +3,16 @@ package navigation
 import (
 	"errors"
 	"github.com/PuerkitoBio/goquery"
-	http_bridge "go-bot/http-bridge"
+	httpbridg "go-bot/http-bridge"
 	"go-bot/resources"
 	"strings"
 )
 
 var ErrNotFound = errors.New("item not found")
+var ErrEnergyEmpty = errors.New("energy is over")
 
 func GetPage(url string) (*goquery.Document, error) {
-	rsp, err := http_bridge.GetBodyBytes(url)
+	rsp, err := httpbridg.GetBodyBytes(url)
 	if err != nil {
 		return nil, err
 	}
@@ -31,10 +32,11 @@ func GoToFirstMenuLink(doc *goquery.Document, label string) (*goquery.Document, 
 	newDoc := doc
 	finalError := ErrNotFound
 	doc.Find(".menu_link").EachWithBreak(func(_ int, s *goquery.Selection) bool {
-		if strings.Contains(s.Text(), label) {
+		debugStr := s.Text()
+		if strings.Contains(debugStr, label) {
 			url, ok := s.Attr("href")
 			if ok {
-				rsp, err := http_bridge.GetBodyBytes(resources.UrlPrefix + url)
+				rsp, err := httpbridg.GetBodyBytes(resources.UrlPrefix + url)
 
 				if err != nil {
 					finalError = err
@@ -59,7 +61,7 @@ func GoToFirstMenuLink(doc *goquery.Document, label string) (*goquery.Document, 
 func GoByClass(doc *goquery.Document, class string) (*goquery.Document, error) {
 	url, ok := doc.Find("." + class).First().Attr("href")
 	if ok {
-		rsp, err := http_bridge.GetBodyBytes(resources.UrlPrefix + url)
+		rsp, err := httpbridg.GetBodyBytes(resources.UrlPrefix + url)
 
 		if err != nil {
 			return nil, err
@@ -89,10 +91,11 @@ func GoByClassAndVisibleTextContains(doc *goquery.Document, class string, text s
 	newDoc := doc
 	finalError := ErrNotFound
 	doc.Find("." + class).EachWithBreak(func(_ int, s *goquery.Selection) bool {
-		if strings.Contains(s.Text(), text) {
+		debugStr := s.Text()
+		if strings.Contains(debugStr, text) {
 			url, ok := s.Attr("href")
 			if ok {
-				rsp, err := http_bridge.GetBodyBytes(resources.UrlPrefix + url)
+				rsp, err := httpbridg.GetBodyBytes(resources.UrlPrefix + url)
 				if err != nil {
 					finalError = err
 					return false
@@ -130,7 +133,7 @@ func GetByClassAndImage(doc *goquery.Document, class string, imageName string) (
 		if text == imageName {
 			url, ok := s.Attr("href")
 			if ok {
-				rsp, err := http_bridge.GetBodyBytes(resources.UrlPrefix + url)
+				rsp, err := httpbridg.GetBodyBytes(resources.UrlPrefix + url)
 				if err != nil {
 					finalError = err
 					return false
@@ -152,7 +155,7 @@ func GetByClassAndImage(doc *goquery.Document, class string, imageName string) (
 }
 
 func ValidateUrl(url string) bool {
-	body, err := http_bridge.GetBodyBytes(url)
+	body, err := httpbridg.GetBodyBytes(url)
 	if err != nil {
 		return false
 	}
@@ -165,4 +168,18 @@ func ValidateUrl(url string) bool {
 		return false
 	}
 	return IsMainPage(doc)
+}
+
+func SingleFight(doc *goquery.Document) (*goquery.Document, error) {
+	var err error
+	for {
+		doc, err = GoByClassAndVisibleTextContains(doc, resources.HtmlMyButtAtt, "Атаковать")
+		if err == ErrNotFound {
+			return doc, nil
+		} else if err != nil {
+			return doc, err
+		} else if IsVisibleTextContains(doc, resources.HtmlEnergyIsEmpty) {
+			return doc, ErrEnergyEmpty
+		}
+	}
 }

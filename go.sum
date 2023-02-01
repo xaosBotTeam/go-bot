@@ -96,6 +96,8 @@ github.com/xaosBotTeam/go-shared-models v0.0.9 h1:u2otQpMwu4K2uL3fqr0WWqox3JOEt3
 github.com/xaosBotTeam/go-shared-models v0.0.9/go.mod h1:WcR1bmMG+Rh8xXXJsisQc2OsTwXkmt1RKG9VNm+64Ug=
 github.com/xaosBotTeam/go-shared-models v1.0.0 h1:2DWUjOxgWrf5Hu6Lhbpoh4k4oLzzinVJCOuTwjtId7A=
 github.com/xaosBotTeam/go-shared-models v1.0.0/go.mod h1:Ka8wriBp/g5+GvvSZpd17n0KrcLBJJkTIW67+pJXOkY=
+github.com/xaosBotTeam/go-shared-models v1.1.0 h1:9pE7vnqOHfIr2MSgJOk+kd9dx/2MbHdjQr9kkkxh9Dk=
+github.com/xaosBotTeam/go-shared-models v1.1.0/go.mod h1:Ka8wriBp/g5+GvvSZpd17n0KrcLBJJkTIW67+pJXOkY=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.uber.org/atomic v1.10.0 h1:9qC72Qh0+3MqyJbAn8YU5xVq1frD8bn3JtD2oXtafVQ=
 go.uber.org/atomic v1.10.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
