@@ -95,7 +95,8 @@ func (s *StatusStorage) GetAll() (map[int]status.Status, error) {
 }
 
 func (s *StatusStorage) Update(id int, stat status.Status) error {
-	_, err := s.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET (game_id, friendly_name, energy_limit) = (%d, '%s', %d) WHERE id = %d", s.table, stat.GameID, stat.FriendlyName, stat.EnergyLimit, id))
+	_, err := s.db.Exec(context.Background(), fmt.Sprintf("UPDATE %s SET (game_id, friendly_name, energy_limit)" +
+		" = (%d, '%s', %d) WHERE id = %d", s.table, stat.GameID, stat.FriendlyName, stat.EnergyLimit, id))
 	return err
 }
 

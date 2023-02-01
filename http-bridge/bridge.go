@@ -23,7 +23,7 @@ func GetBodyBytes(url string) (io.Reader, error) {
 		return nil, err
 	}
 	if mode == "DEBUG" {
-		file, err := os.OpenFile(path+string(os.PathSeparator)+fmt.Sprintf("bot-page-%d.html", current), os.O_CREATE|os.O_RDWR, os.ModePerm)
+		file, err := os.OpenFile(path+string(os.PathSeparator)+fmt.Sprintf("bot-page-%d.html", 0), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			log.Printf("WARN: logging pages: %s", err.Error())
 		}
@@ -33,13 +33,13 @@ func GetBodyBytes(url string) (io.Reader, error) {
 		if err != nil {
 			log.Printf("WARN: logging pages: %s", err.Error())
 		}
-		if current-last >= 10 {
-			err = os.Remove(path + string(os.PathSeparator) + fmt.Sprintf("bot-page-%d.html", last))
-			if err != nil {
-				log.Printf("WARN: logging pages: %s", err.Error())
-			}
-			last++
-		}
+		//if current-last >= 10 {
+		//	err = os.Remove(path + string(os.PathSeparator) + fmt.Sprintf("bot-page-%d.html", 0))
+		//	if err != nil {
+		//		log.Printf("WARN: logging pages: %s", err.Error())
+		//	}
+		//	last++
+		//}
 		current++
 		return &buffer, nil
 	}

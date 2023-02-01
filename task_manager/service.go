@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-func New(accounts storage.AbstractAccountStorage, configs storage.AbstractConfigStorage, statuses storage.AbstractStatusStorage) *TaskManager {
+func New(accounts storage.AbstractAccountStorage, configs storage.AbstractConfigStorage,
+	statuses storage.AbstractStatusStorage) *TaskManager {
 	if accounts == nil || configs == nil {
 		return nil
 	}
@@ -163,7 +164,7 @@ func (t *TaskManager) iterateCollectors(id int, stat models.Status, acc account.
 	return stat, finalErr
 }
 
-func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks []task.Abstract, currentStatus models.Status, configuration config.Config) (config.Config, error) {
+func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.Type]task.Abstract, currentStatus models.Status, configuration config.Config) (config.Config, error) {
 	var finalErr error
 	for _, currentTask := range tasks {
 		if currentTask.CheckCondition() {
@@ -241,7 +242,7 @@ func (t *TaskManager) servingLoop(id int, wg *sync.WaitGroup) {
 		if err != nil {
 			log.Printf("ERR: Task Manager: %s", err.Error())
 		}
-		tasks = StatusToTasks(configuration)
+		tasks = UpdateTasksWithStatus(tasks, configuration)
 
 		if t.update[id] {
 			t.update[id] = false

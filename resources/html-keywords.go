@@ -9,8 +9,10 @@ const (
 	HtmlStatusBar       = "butt_bott"
 	UrlPrefix           = "http://xaos.mobi/index.php"
 	HtmlEnergyIsEmpty   = "У вас не хватает энергии."
-	HtmlYouAreTooWeak   = "Вы очень слабы"
-	HtmlRestoreHealth   = "mybutt_att"
-	HtmlAnotherRival    = "Другой противник"
+	HtmlYouAreTooWeak = "Вы очень слабы"
+	HtmlMyButtAtt     = "mybutt_att"
+	HtmlAnotherRival  = "Другой противник"
 	HtmlCharacter       = "Герой"
+	HtmlTravellingTitle = "Путешествия"
+	HtmlTravellingButton = " Путeшествие"
 )
