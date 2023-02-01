@@ -37,7 +37,7 @@ type BotController struct {
 //	@Description	get config by ID
 //	@ID				get-config-by-id
 //
-// @Tags 			Task
+// @Tags 			Config
 // @Accept 			json
 // @Param 			id path int true "account id"
 // @Param 			config body config.Config true "new config"
@@ -68,7 +68,7 @@ func (b *BotController) UpdateConfig(c *fiber.Ctx) error {
 //	@Description	get config by ID
 //	@ID				get-config-by-id
 //
-//	@Tags 			Task
+//	@Tags 			Config
 //	@Produce		json
 //	@Param			id path int false "account id"
 //	@Router			/config/{id} [get]
@@ -101,7 +101,7 @@ func (b *BotController) GetConfigById(c *fiber.Ctx) error {
 //	@Description	get all configs
 //	@ID				get-all-configs
 //
-//	@Tags			Task
+//	@Tags			Config
 //	@Produce		json
 //	@Router			/config/ [get]
 func (b *BotController) GetAllConfigs(c *fiber.Ctx) error {
@@ -214,14 +214,14 @@ func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Update status for all
-//	@Description	get status for all
-//	@ID				update-status-for-all
+//	@Summary		Update config for all
+//	@Description	get config for all
+//	@ID				update-config-for-all
 //
-// @Tags 			Task
+// @Tags 			Config
 // @Accept 			json
 // @Param 			config body config.Config true "new config"
-// @Router			/task/ [put]
+// @Router			/config/ [put]
 func (b *BotController) SetConfigForAll(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 

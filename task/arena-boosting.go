@@ -111,7 +111,7 @@ func (t *ArenaBoosting) RemoveFromStatus(configuration config.Config) config.Con
 }
 
 func (t *ArenaBoosting) restoreCharacterHealthReturnToArena(doc *goquery.Document) (*goquery.Document, error) {
-	doc, err := navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlRestoreHealth, "Восстановить жизни")
+	doc, err := navigation.GoByClassAndVisibleTextContains(doc, resources.HtmlMyButtAtt, "Восстановить жизни")
 	if err != nil {
 		return doc, err
 	}
