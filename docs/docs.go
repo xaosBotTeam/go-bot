@@ -38,18 +38,13 @@ const docTemplate = `{
                 "operationId": "add-new-game-account",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "account url",
-                        "name": "url",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "id of account` + "`" + `s owner",
-                        "name": "owner",
-                        "in": "query",
-                        "required": true
+                        "name": "account",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.Account"
+                        }
                     }
                 ],
                 "responses": {}
@@ -75,44 +70,76 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
-            }
-        },
-        "/refresh": {
-            "get": {
-                "description": "restart task manager in order to add new accounts",
-                "tags": [
-                    "General"
-                ],
-                "summary": "Restart task manager",
-                "operationId": "restart-task-manager",
-                "responses": {}
-            }
-        },
-        "/task/": {
-            "get": {
-                "description": "get all statuses",
+            },
+            "delete": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Task"
+                    "Account"
                 ],
-                "summary": "Get all statuses",
-                "operationId": "get-all-status",
+                "summary": "Delete game account by id",
+                "operationId": "delete-account-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {}
             }
         },
-        "/task/{id}": {
+        "/config/": {
             "get": {
-                "description": "get status by ID",
+                "description": "get all configs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Task"
+                    "Config"
                 ],
-                "summary": "Get status by id",
-                "operationId": "get-status-by-id",
+                "summary": "Get all configs",
+                "operationId": "get-all-configs",
+                "responses": {}
+            },
+            "put": {
+                "description": "get config for all",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Update config for all",
+                "operationId": "update-config-for-all",
+                "parameters": [
+                    {
+                        "description": "new config",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/config.Config"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/config/{id}": {
+            "get": {
+                "description": "get config by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Get config by id",
+                "operationId": "get-config-by-id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -124,15 +151,15 @@ const docTemplate = `{
                 "responses": {}
             },
             "put": {
-                "description": "get status by ID",
+                "description": "get config by ID",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "Task"
+                    "Config"
                 ],
-                "summary": "Update status by id",
-                "operationId": "get-status-by-id",
+                "summary": "Update config by id",
+                "operationId": "get-config-by-id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -147,8 +174,43 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/task.Status"
+                            "$ref": "#/definitions/config.Config"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/status/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Status"
+                ],
+                "summary": "Get all statuses",
+                "operationId": "get-statuses",
+                "responses": {}
+            }
+        },
+        "/status/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Status"
+                ],
+                "summary": "Get status by id",
+                "operationId": "get-status-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -156,7 +218,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "task.Status": {
+        "account.Account": {
+            "description": "Model with static info about game account",
+            "type": "object",
+            "properties": {
+                "owner": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "config.Config": {
             "description": "Model with information about tasks and their parameters",
             "type": "object",
             "properties": {
@@ -164,6 +238,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "arena_use_energy_cans": {
+                    "type": "boolean"
+                },
+                "travelling": {
                     "type": "boolean"
                 }
             }
