@@ -121,17 +121,6 @@ func (b *BotController) GetAllConfigs(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Restart task manager
-//	@Description	restart task manager in order to add new accounts
-//	@ID				restart-task-manager
-//	@Tags			General
-//
-//	@Router			/refresh [patch]
-func (b *BotController) RestartTaskManager(c *fiber.Ctx) error {
-	b.service.RefreshAccounts()
-	return c.Status(http.StatusOK).JSON("Refresh request sent to task manager")
-}
-
 //	@Summary		Add new game account
 //	@ID				add-new-game-account
 //
@@ -154,7 +143,7 @@ func (b *BotController) AddAccount(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(reply)
 	}
 	reply["data"] = strconv.Itoa(id)
-	return c.JSON(acc)
+	return c.JSON(reply)
 }
 
 //	@Summary		Get game account by id
@@ -213,6 +202,30 @@ func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 	reply["data"] = string(jsonStr)
 	return c.JSON(reply)
 }
+
+//	@Summary		Delete game account by id
+//	@ID				delete-account-by-id
+//
+//	@Tags 			Account
+//	@Produce		json
+//	@Param			id	path int true "account id"
+//	@Router			/account/{id} [delete]
+func (b *BotController) DeleteAccount(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("Can't parse account id")
+	}
+	err = b.service.RemoveAccount(id)
+	if err == pgx.ErrNoRows {
+		return c.Status(fiber.StatusNotFound).JSON("Can't find account with such id")
+	} else if err != nil {
+		log.Printf(err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON("Something doesn't work")
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 
 //	@Summary		Update config for all
 //	@Description	get config for all

@@ -19,8 +19,6 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	app.Patch("/refresh", controller.RestartTaskManager)
-
 	taskApi := app.Group("/config")
 	taskApi.Get("/", controller.GetAllConfigs)
 	taskApi.Put("/", controller.SetConfigForAll)
@@ -32,6 +30,7 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 	accountApi.Get("/", controller.GetAllAccounts)
 	accountApi.Get("/:id", controller.GetAccountById)
 	accountApi.Post("/", controller.AddAccount)
+	accountApi.Delete("/:id", controller.DeleteAccount)
 	
 	statusApi := app.Group("/status")
 	statusApi.Get("/", controller.GetAllStatuses)

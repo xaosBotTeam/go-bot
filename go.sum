@@ -92,10 +92,6 @@ github.com/valyala/fasthttp v1.43.0 h1:Gy4sb32C98fbzVWZlTM1oTMdLWGyvxR03VhM6cBIU
 github.com/valyala/fasthttp v1.43.0/go.mod h1:f6VbjjoI3z1NDOZOv17o6RvtRSWxC77seBFc2uWtgiY=
 github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVSA8=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
-github.com/xaosBotTeam/go-shared-models v0.0.9 h1:u2otQpMwu4K2uL3fqr0WWqox3JOEt3I1gHNTUsMrqho=
-github.com/xaosBotTeam/go-shared-models v0.0.9/go.mod h1:WcR1bmMG+Rh8xXXJsisQc2OsTwXkmt1RKG9VNm+64Ug=
-github.com/xaosBotTeam/go-shared-models v1.0.0 h1:2DWUjOxgWrf5Hu6Lhbpoh4k4oLzzinVJCOuTwjtId7A=
-github.com/xaosBotTeam/go-shared-models v1.0.0/go.mod h1:Ka8wriBp/g5+GvvSZpd17n0KrcLBJJkTIW67+pJXOkY=
 github.com/xaosBotTeam/go-shared-models v1.1.0 h1:9pE7vnqOHfIr2MSgJOk+kd9dx/2MbHdjQr9kkkxh9Dk=
 github.com/xaosBotTeam/go-shared-models v1.1.0/go.mod h1:Ka8wriBp/g5+GvvSZpd17n0KrcLBJJkTIW67+pJXOkY=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=

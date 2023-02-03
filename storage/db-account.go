@@ -42,6 +42,7 @@ type AbstractAccountStorage interface {
 	Close()
 	Add(acc account.Account) (int, error)
 	Update(id int, acc account.Account) error
+	Delete(id int) error
 }
 
 type AccountStorage struct {
@@ -108,5 +109,10 @@ func (a *AccountStorage) Add(acc account.Account) (int, error) {
 
 func (a *AccountStorage) Update(id int, acc account.Account) error {
 	_, err := a.db.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET (owner_id, url) = (%d, '%s') WHERE id = %d`, a.table, acc.Owner, acc.URL, id))
+	return err
+}
+
+func (a *AccountStorage) Delete(id int) error {
+	_, err := a.db.Exec(context.Background(), fmt.Sprintf(`DELETE FROM %s WHERE id = %d`, a.table, id))
 	return err
 }
