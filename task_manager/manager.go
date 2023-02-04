@@ -158,7 +158,7 @@ func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.T
 	var finalErr error
 	for _, currentTask := range tasks {
 		if currentTask.CheckCondition() {
-			log.Printf("Task %s started on account id %d, nickname %s", currentTask.GetName(), id, currentStatus.FriendlyName)
+			log.Printf("Task %T started on account id %d, nickname %s", currentTask, id, currentStatus.FriendlyName)
 
 			err := currentTask.Do(acc, currentStatus)
 			if err != nil {
@@ -168,7 +168,7 @@ func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.T
 				configuration = currentTask.RemoveFromStatus(configuration)
 			}
 
-			log.Printf("Task %s ended on account id %d, nickname %s", currentTask.GetName(), id, currentStatus.FriendlyName)
+			log.Printf("Task %T ended on account id %d, nickname %s", currentTask, id, currentStatus.FriendlyName)
 		}
 	}
 	return configuration, finalErr
