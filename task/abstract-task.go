@@ -10,6 +10,5 @@ type Abstract interface {
 	CheckCondition() bool
 	Do(acc account.Account, status status.Status) error
 	IsPersistent() bool
-	GetName() string
 	RemoveFromStatus(configuration config.Config) config.Config
 }
