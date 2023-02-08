@@ -13,6 +13,7 @@ type AbstractStatusStorage interface {
 	Update(id int, stat status.Status) error
 	Add(id int, stat status.Status) error
 	Close()
+	Delete(id int) error
 }
 
 func NewStatusStorage(connStr string) (*StatusStorage, error) {
@@ -107,4 +108,9 @@ func (s *StatusStorage) Add(id int, stat status.Status) error {
 
 func (s *StatusStorage) Close() {
 	s.db.Close()
+}
+
+func (s *StatusStorage) Delete(id int) error {
+	_, err := s.db.Exec(context.Background(), fmt.Sprintf(`DELETE FROM %s WHERE id = %d`, s.table, id))
+	return err
 }

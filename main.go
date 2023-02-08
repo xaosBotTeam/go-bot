@@ -39,6 +39,7 @@ func main() {
 
 	defer accountStorage.Close()
 	defer configStorage.Close()
+	defer statusStorage.Close()
 	taskManager := task_manager.New(accountStorage, configStorage, statusStorage)
 	controller := handler.New(taskManager)
 

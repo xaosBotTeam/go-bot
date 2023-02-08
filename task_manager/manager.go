@@ -12,7 +12,6 @@ import (
 	"go-bot/storage"
 	"go-bot/task"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -25,8 +24,10 @@ func New(accounts storage.AbstractAccountStorage, configs storage.AbstractConfig
 		accountStorage: accounts,
 		configStorage:  configs,
 		statusStorage:  statuses,
-		stop:           false, update: make(map[int]bool),
-		collectors: make(map[int][]collector.Abstract),
+		update:         NewUpdateDetector(),
+		collectors:     make(map[int][]collector.Abstract),
+		accountQueue:   NewAccountQueue(),
+		stoppers:       make(map[int]chan bool),
 	}
 }
 
@@ -34,13 +35,14 @@ type TaskManager struct {
 	accountStorage storage.AbstractAccountStorage
 	configStorage  storage.AbstractConfigStorage
 	statusStorage  storage.AbstractStatusStorage
-	stop           bool
-	update         map[int]bool
+	update         *UpdateDetector
 	collectors     map[int][]collector.Abstract
+	accountQueue   AbstractAccountQueue
+	stoppers       map[int]chan bool
 }
 
 func (t *TaskManager) UpdateConfig(accountId int, configuration config.Config) error {
-	t.update[accountId] = true
+	t.update.Store(accountId, true)
 	_, err := t.configStorage.GetByAccId(accountId)
 	if err != nil && err == pgx.ErrNoRows {
 		return t.configStorage.Add(accountId, configuration)
@@ -66,7 +68,7 @@ func (t *TaskManager) initAccount(id int) error {
 		return err
 	}
 
-	t.update[id] = false
+	t.update.Store(id, false)
 	t.collectors[id] = collector.NewInfoCollectorList()
 	return nil
 }
@@ -81,35 +83,18 @@ func (t *TaskManager) Init() error {
 		if err != nil {
 			return err
 		}
+		t.accountQueue.Add(id)
+		t.stoppers[id] = make(chan bool)
 	}
 	return nil
 }
 
 func (t *TaskManager) Start() error {
 	for {
-		accounts, err := t.accountStorage.GetAll()
-		if err != nil {
-			return err
-		}
-
-		for id := range accounts {
-			t.update[id] = false
-		}
-
-		var wg sync.WaitGroup
-		for id := range accounts {
-			wg.Add(1)
-			go t.servingLoop(id, &wg)
-		}
-		wg.Wait()
-		log.Printf("Restart tasks in 30 seconds...")
-		time.Sleep(30 * time.Second)
-		t.stop = false
+		id := t.accountQueue.Get()
+		go t.servingLoop(id, t.stoppers[id])
 	}
-}
 
-func (t *TaskManager) RefreshAccounts() {
-	t.stop = true
 }
 
 func (t *TaskManager) ConfigById(id int) (config.Config, error) {
@@ -138,6 +123,11 @@ func (t *TaskManager) AddAccount(acc account.Account) (int, error) {
 		return 0, err
 	}
 	err = t.initAccount(newId)
+	if err != nil {
+		return 0, err
+	}
+	t.accountQueue.Add(newId)
+	t.stoppers[newId] = make(chan bool)
 	return newId, err
 }
 
@@ -168,7 +158,7 @@ func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.T
 	var finalErr error
 	for _, currentTask := range tasks {
 		if currentTask.CheckCondition() {
-			log.Printf("Task %s started on account id %d, nickname %s", currentTask.GetName(), id, currentStatus.FriendlyName)
+			log.Printf("Task %T started on account id %d, nickname %s", currentTask, id, currentStatus.FriendlyName)
 
 			err := currentTask.Do(acc, currentStatus)
 			if err != nil {
@@ -178,13 +168,13 @@ func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.T
 				configuration = currentTask.RemoveFromStatus(configuration)
 			}
 
-			log.Printf("Task %s ended on account id %d, nickname %s", currentTask.GetName(), id, currentStatus.FriendlyName)
+			log.Printf("Task %T ended on account id %d, nickname %s", currentTask, id, currentStatus.FriendlyName)
 		}
 	}
 	return configuration, finalErr
 }
 
-func (t *TaskManager) servingLoop(id int, wg *sync.WaitGroup) {
+func (t *TaskManager) servingLoop(id int, stop chan bool) {
 	configuration, err := t.configStorage.GetByAccId(id)
 	if err != nil {
 		log.Printf("ERR: Task Manager: %s", err.Error())
@@ -199,55 +189,54 @@ func (t *TaskManager) servingLoop(id int, wg *sync.WaitGroup) {
 	}
 	tasks := StatusToTasks(configuration)
 	for {
-		oldStatus := stat
-		stat, err = t.iterateCollectors(id, stat, acc)
-		if err != nil {
-			log.Printf("ERR: Task Manager: Info Collecting: id %d, name %s: %s", id, stat.FriendlyName, err.Error())
-		}
-		if oldStatus != stat {
-			err = t.statusStorage.Update(id, stat)
+		select {
+		case isStopped := <- t.stoppers[id]:
+			if isStopped {
+				return
+			}
+		default:
+			oldStatus := stat
+			stat, err = t.iterateCollectors(id, stat, acc)
 			if err != nil {
-				log.Printf("ERR: Task Manager: updating main")
+				log.Printf("ERR: Task Manager: Info Collecting: id %d, name %s: %s", id, stat.FriendlyName, err.Error())
 			}
-		}
-
-		oldConfig := configuration
-		if err != nil {
-			log.Printf("ERR: Task Manager: try to get current status: %s", err.Error())
-		}
-		configuration, err = t.iterateTasks(id, acc, tasks, stat, configuration)
-		if err != nil {
-			log.Printf("ERR: Task Manager %s", err.Error())
-		}
-
-		if configuration != oldConfig && !t.update[id] {
-			err = t.configStorage.Update(id, configuration)
-			if err != nil && err == pgx.ErrNoRows {
-				err = t.configStorage.Add(id, configuration)
+			if oldStatus != stat {
+				err = t.statusStorage.Update(id, stat)
+				if err != nil {
+					log.Printf("ERR: Task Manager: updating main")
+				}
 			}
+			oldConfig := configuration
+			if err != nil {
+				log.Printf("ERR: Task Manager: try to get current status: %s", err.Error())
+			}
+			configuration, err = t.iterateTasks(id, acc, tasks, stat, configuration)
+			if err != nil {
+				log.Printf("ERR: Task Manager %s", err.Error())
+			}
+			if configuration != oldConfig && !t.update.Load(id) {
+				err = t.configStorage.Update(id, configuration)
+				if err != nil && err == pgx.ErrNoRows {
+					err = t.configStorage.Add(id, configuration)
+				}
+				if err != nil {
+					log.Printf("ERR: Task Manager: %s", err.Error())
+				}
+				if err != nil {
+					log.Printf("ERR: Task Manager: %s", err.Error())
+				}
+			}
+
+			configuration, err = t.configStorage.GetByAccId(id)
 			if err != nil {
 				log.Printf("ERR: Task Manager: %s", err.Error())
 			}
-			if err != nil {
-				log.Printf("ERR: Task Manager: %s", err.Error())
+			tasks = UpdateTasksWithStatus(tasks, configuration)
+			
+			if t.update.Load(id) {
+				t.update.Store(id, false)
 			}
 		}
-
-		if t.stop {
-			wg.Done()
-			return
-		}
-
-		configuration, err = t.configStorage.GetByAccId(id)
-		if err != nil {
-			log.Printf("ERR: Task Manager: %s", err.Error())
-		}
-		tasks = UpdateTasksWithStatus(tasks, configuration)
-
-		if t.update[id] {
-			t.update[id] = false
-		}
-
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -262,4 +251,22 @@ func (t *TaskManager) GetStatus(id int) (models.Status, error) {
 
 func (t *TaskManager) GetAllStatuses() (map[int]models.Status, error) {
 	return t.statusStorage.GetAll()
+}
+
+func (t *TaskManager) RemoveAccount(id int) error {
+	var finalErr error
+	t.stoppers[id] <- true
+	finalErr = t.configStorage.Delete(id)
+	err := t.accountStorage.Delete(id)
+	if err != nil {
+		finalErr = multierror.Append(finalErr, err)
+	}
+	err = t.statusStorage.Delete(id)
+	if err != nil {
+		finalErr = multierror.Append(finalErr, err)
+	}
+	t.update.Delete(id)
+	delete(t.collectors, id)
+	delete(t.stoppers, id)
+	return finalErr
 }

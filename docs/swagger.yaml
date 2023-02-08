@@ -1,11 +1,21 @@
 basePath: /
 definitions:
-  task.Status:
+  account.Account:
+    description: Model with static info about game account
+    properties:
+      owner:
+        type: integer
+      url:
+        type: string
+    type: object
+  config.Config:
     description: Model with information about tasks and their parameters
     properties:
       arena_farming:
         type: boolean
       arena_use_energy_cans:
+        type: boolean
+      travelling:
         type: boolean
     type: object
 host: localhost:5504
@@ -28,15 +38,11 @@ paths:
       operationId: add-new-game-account
       parameters:
       - description: account url
-        in: query
-        name: url
+        in: body
+        name: account
         required: true
-        type: string
-      - description: id of account`s owner
-        in: query
-        name: owner
-        required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/account.Account'
       produces:
       - application/json
       responses: {}
@@ -44,6 +50,20 @@ paths:
       tags:
       - Account
   /account/{id}:
+    delete:
+      operationId: delete-account-by-id
+      parameters:
+      - description: account id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Delete game account by id
+      tags:
+      - Account
     get:
       operationId: get-account-by-id
       parameters:
@@ -58,28 +78,36 @@ paths:
       summary: Get game account by id
       tags:
       - Account
-  /refresh:
+  /config/:
     get:
-      description: restart task manager in order to add new accounts
-      operationId: restart-task-manager
-      responses: {}
-      summary: Restart task manager
-      tags:
-      - General
-  /task/:
-    get:
-      description: get all statuses
-      operationId: get-all-status
+      description: get all configs
+      operationId: get-all-configs
       produces:
       - application/json
       responses: {}
-      summary: Get all statuses
+      summary: Get all configs
       tags:
-      - Task
-  /task/{id}:
+      - Config
+    put:
+      consumes:
+      - application/json
+      description: get config for all
+      operationId: update-config-for-all
+      parameters:
+      - description: new config
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/config.Config'
+      responses: {}
+      summary: Update config for all
+      tags:
+      - Config
+  /config/{id}:
     get:
-      description: get status by ID
-      operationId: get-status-by-id
+      description: get config by ID
+      operationId: get-config-by-id
       parameters:
       - description: account id
         in: path
@@ -88,14 +116,14 @@ paths:
       produces:
       - application/json
       responses: {}
-      summary: Get status by id
+      summary: Get config by id
       tags:
-      - Task
+      - Config
     put:
       consumes:
       - application/json
-      description: get status by ID
-      operationId: get-status-by-id
+      description: get config by ID
+      operationId: get-config-by-id
       parameters:
       - description: account id
         in: path
@@ -107,9 +135,33 @@ paths:
         name: config
         required: true
         schema:
-          $ref: '#/definitions/task.Status'
+          $ref: '#/definitions/config.Config'
       responses: {}
-      summary: Update status by id
+      summary: Update config by id
       tags:
-      - Task
+      - Config
+  /status/:
+    get:
+      operationId: get-statuses
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all statuses
+      tags:
+      - Status
+  /status/{id}:
+    get:
+      operationId: get-status-by-id
+      parameters:
+      - description: account id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Get status by id
+      tags:
+      - Status
 swagger: "2.0"
