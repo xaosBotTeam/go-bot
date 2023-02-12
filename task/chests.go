@@ -45,13 +45,6 @@ func (c *Chests) Do(acc account.Account, _ status.Status) error {
 }
 
 func (c *Chests) fixErrors(doc *goquery.Document, err error) (*goquery.Document, bool, error) {
-	if err == navigation.ErrNotFound {
-		return doc, true, nil
-	}
-	
-	if navigation.IsTopTitleContains(doc, resources.HtmlBagButton) {
-		return doc, false, err
-	}
 	if navigation.IsMainPage(doc) {
 		doc, err = navigation.GoToFirstMenuLink(doc, resources.HtmlBagButton)
 		if err != nil {
@@ -59,6 +52,14 @@ func (c *Chests) fixErrors(doc *goquery.Document, err error) (*goquery.Document,
 		}
 		return doc, false, nil
 	}
+	if err == navigation.ErrNotFound {
+		return doc, true, nil
+	}
+	
+	if navigation.IsTopTitleContains(doc, resources.HtmlBagButton) {
+		return doc, false, err
+	}
+	
 	return doc, true, ErrUB
 }
 
