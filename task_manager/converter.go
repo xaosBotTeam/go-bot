@@ -13,6 +13,9 @@ func StatusToTasks(status models.Config) map[task.Type]task.Abstract {
 	if status.Travelling {
 		tasks[task.TravellingTask] = task.NewTravelling()
 	}
+	if status.OpenChests {
+		tasks[task.OpenChests] = task.NewChests()
+	}
 	return tasks
 }
 
@@ -28,6 +31,12 @@ func UpdateTasksWithStatus(tasks map[task.Type]task.Abstract, configuration mode
 		tasks[task.ArenaBoostingTask] = task.NewArenaBoosting(configuration)
 	} else {
 		delete(tasks, task.ArenaBoostingTask)
+	}
+	
+	if configuration.OpenChests {
+		tasks[task.OpenChests] = task.NewChests()
+	} else {
+		delete(tasks, task.OpenChests)
 	}
 	return tasks
 }

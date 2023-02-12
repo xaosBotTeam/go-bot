@@ -15,4 +15,5 @@ const (
 	HtmlCharacter       = "Герой"
 	HtmlTravellingTitle = "Путешествия"
 	HtmlTravellingButton = " Путeшествие"
+	HtmlBagButton = "Рюкзак"
 )

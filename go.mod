@@ -47,6 +47,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.43.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	github.com/xaosBotTeam/go-shared-models v1.1.0
+	github.com/xaosBotTeam/go-shared-models v1.2.1
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 )

@@ -23,6 +23,10 @@ func GetBodyBytes(url string) (io.Reader, error) {
 		return nil, err
 	}
 	if mode == "DEBUG" {
+		err = os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			return nil, err
+		}
 		file, err := os.OpenFile(path+string(os.PathSeparator)+fmt.Sprintf("bot-page-%d.html", 0), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			log.Printf("WARN: logging pages: %s", err.Error())

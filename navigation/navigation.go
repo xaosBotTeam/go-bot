@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+
 var ErrNotFound = errors.New("item not found")
 var ErrEnergyEmpty = errors.New("energy is over")
 
@@ -118,40 +119,11 @@ func GoByClassAndVisibleTextContains(doc *goquery.Document, class string, text s
 
 func IsTopTitleContains(doc *goquery.Document, title string) bool {
 	selection := doc.Find("." + resources.HtmlTopTitle)
-	return selection.Text() == title
+	return strings.Contains(selection.Text(), title)
 }
 
 func GetTopTitle(document *goquery.Document) string {
 	return document.Find("." + resources.HtmlTopTitle).Text()
-}
-
-func GetByClassAndImage(doc *goquery.Document, class string, imageName string) (*goquery.Document, error) {
-	newDoc := doc
-	finalError := ErrNotFound
-	doc.Find("." + class).EachWithBreak(func(_ int, s *goquery.Selection) bool {
-		text, _ := s.Find("img").Attr("src")
-		if text == imageName {
-			url, ok := s.Attr("href")
-			if ok {
-				rsp, err := httpbridg.GetBodyBytes(resources.UrlPrefix + url)
-				if err != nil {
-					finalError = err
-					return false
-				}
-				doc, err := goquery.NewDocumentFromReader(rsp)
-				if err != nil {
-					finalError = err
-					return false
-				}
-				newDoc = doc
-				finalError = nil
-			}
-			return false
-		}
-		return true
-
-	})
-	return newDoc, finalError
 }
 
 func ValidateUrl(url string) bool {
