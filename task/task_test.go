@@ -1,14 +1,20 @@
 package task_test
 
 import (
-	"github.com/xaosBotTeam/go-shared-models/account"
-	"github.com/xaosBotTeam/go-shared-models/status"
 	"go-bot/task"
 	"os"
 	"testing"
+
+	"github.com/xaosBotTeam/go-shared-models/account"
+	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
-func testAbstractTask(testTask task.Abstract) error {
+
+type Abstract interface {
+	Do(account.Account, status.Status) error
+}
+
+func testAbstractTask(testTask Abstract) error {
 	testAcc := account.Account{
 		URL: os.Getenv("XAOSBOT_TEST_ACC_URL"),
 		Owner: 0,

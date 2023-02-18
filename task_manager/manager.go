@@ -9,15 +9,14 @@ import (
 	models "github.com/xaosBotTeam/go-shared-models/status"
 	"go-bot/collector"
 	"go-bot/navigation"
-	"go-bot/storage"
 	"go-bot/task"
 	"log"
 	"time"
 )
 
-func New(accounts storage.AbstractAccountStorage, configs storage.AbstractConfigStorage,
-	statuses storage.AbstractStatusStorage) *TaskManager {
-	if accounts == nil || configs == nil {
+func New(accounts AbstractAccountStorage, configs AbstractConfigStorage,
+	statuses AbstractStatusStorage) *TaskManager {
+	if accounts == nil || configs == nil || statuses == nil {
 		return nil
 	}
 	return &TaskManager{
@@ -25,18 +24,18 @@ func New(accounts storage.AbstractAccountStorage, configs storage.AbstractConfig
 		configStorage:  configs,
 		statusStorage:  statuses,
 		update:         NewUpdateDetector(),
-		collectors:     make(map[int][]collector.Abstract),
+		collectors:     make(map[int][]AbstractCollector),
 		accountQueue:   NewAccountQueue(),
 		stoppers:       make(map[int]chan bool),
 	}
 }
 
 type TaskManager struct {
-	accountStorage storage.AbstractAccountStorage
-	configStorage  storage.AbstractConfigStorage
-	statusStorage  storage.AbstractStatusStorage
+	accountStorage AbstractAccountStorage
+	configStorage  AbstractConfigStorage
+	statusStorage  AbstractStatusStorage
 	update         *UpdateDetector
-	collectors     map[int][]collector.Abstract
+	collectors     map[int][]AbstractCollector
 	accountQueue   AbstractAccountQueue
 	stoppers       map[int]chan bool
 }
@@ -64,12 +63,19 @@ func (t *TaskManager) initAccount(id int) error {
 	_, err = t.statusStorage.GetById(id)
 	if err == pgx.ErrNoRows {
 		err = t.statusStorage.Add(id, models.Status{})
+		if err != nil {
+            return err
+        }
 	} else if err != nil {
 		return err
 	}
 
 	t.update.Store(id, false)
-	t.collectors[id] = collector.NewInfoCollectorList()
+	t.collectors[id] = []AbstractCollector {
+		collector.NewEnergyLimit(),
+        collector.NewGameId(),
+        collector.NewNickname(),
+    }
 	return nil
 }
 
@@ -154,7 +160,7 @@ func (t *TaskManager) iterateCollectors(id int, stat models.Status, acc account.
 	return stat, finalErr
 }
 
-func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.Type]task.Abstract, currentStatus models.Status, configuration config.Config) (config.Config, error) {
+func (t *TaskManager) iterateTasks(id int, acc account.Account, tasks map[task.Type]AbstractTask, currentStatus models.Status, configuration config.Config) (config.Config, error) {
 	var finalErr error
 	for _, currentTask := range tasks {
 		if currentTask.CheckCondition() {

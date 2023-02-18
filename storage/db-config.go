@@ -8,17 +8,9 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/config"
 )
 
-type AbstractConfigStorage interface {
-	GetAll() ([]int, []config.Config, error)
-	GetByAccId(id int) (config.Config, error)
-	Update(id int, configuration config.Config) error
-	UpdateRange(configuration config.Config) error
-	Delete(id int) error
-	Add(id int, configuration config.Config) error
-	Close()
-}
 
-func NewConfigStorage(connString string) (AbstractConfigStorage, error) {
+
+func NewConfigStorage(connString string) (*DbConfigStorage, error) {
 	conn, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		return nil, err

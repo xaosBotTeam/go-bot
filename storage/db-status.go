@@ -7,15 +7,6 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
-type AbstractStatusStorage interface {
-	GetById(id int) (status.Status, error)
-	GetAll() (map[int]status.Status, error)
-	Update(id int, stat status.Status) error
-	Add(id int, stat status.Status) error
-	Close()
-	Delete(id int) error
-}
-
 func NewStatusStorage(connStr string) (*StatusStorage, error) {
 	conn, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {

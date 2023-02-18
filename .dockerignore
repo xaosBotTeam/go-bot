@@ -3,4 +3,4 @@
 .vscode
 .env
 README.md
-build
+/build

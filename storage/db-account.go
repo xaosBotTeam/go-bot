@@ -7,7 +7,7 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/account"
 )
 
-func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
+func NewAccountStorage(connString string) (*AccountStorage, error) {
 	conn, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		return nil, err
@@ -34,15 +34,6 @@ func NewAccountStorage(connString string) (AbstractAccountStorage, error) {
 
 	return &AccountStorage{db: conn,
 		table: table}, nil
-}
-
-type AbstractAccountStorage interface {
-	GetAll() (map[int]account.Account, error)
-	GetById(id int) (account.Account, error)
-	Close()
-	Add(acc account.Account) (int, error)
-	Update(id int, acc account.Account) error
-	Delete(id int) error
 }
 
 type AccountStorage struct {

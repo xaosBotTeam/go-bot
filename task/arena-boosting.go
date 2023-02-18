@@ -13,8 +13,6 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
-var _ Abstract = (*ArenaBoosting)(nil)
-
 func NewArenaBoosting(configuration config.Config) *ArenaBoosting {
 	if configuration.ArenaFarming {
 		return &ArenaBoosting{
@@ -61,10 +59,6 @@ func (t *ArenaBoosting) Do(acc account.Account, s status.Status) error {
 
 func (t *ArenaBoosting) CheckCondition() bool {
 	return true
-}
-
-func (t *ArenaBoosting) GetName() string {
-	return "ArenaBoosting"
 }
 
 func (t *ArenaBoosting) restoreEnergy(doc *goquery.Document, limit int) (*goquery.Document, bool, error) {

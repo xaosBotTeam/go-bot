@@ -5,8 +5,8 @@ import (
 	"go-bot/task"
 )
 
-func StatusToTasks(status models.Config) map[task.Type]task.Abstract {
-	tasks := make(map[task.Type]task.Abstract)
+func StatusToTasks(status models.Config) map[task.Type]AbstractTask {
+	tasks := make(map[task.Type]AbstractTask)
 	if status.ArenaFarming {
 		tasks[task.ArenaBoostingTask] = task.NewArenaBoosting(status)
 	}
@@ -19,7 +19,7 @@ func StatusToTasks(status models.Config) map[task.Type]task.Abstract {
 	return tasks
 }
 
-func UpdateTasksWithStatus(tasks map[task.Type]task.Abstract, configuration models.Config) map[task.Type]task.Abstract {
+func UpdateTasksWithStatus(tasks map[task.Type]AbstractTask, configuration models.Config) map[task.Type]AbstractTask {
 	if configuration.Travelling {
 		if _, ok := tasks[task.TravellingTask]; !ok {
 			tasks[task.TravellingTask] = task.NewTravelling()
