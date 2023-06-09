@@ -21,7 +21,7 @@ type Travelling struct {
 }
 
 func (t *Travelling) CheckCondition() bool {
-	if time.Since(t.lastVisit) >= 5 * time.Minute {
+	if time.Since(t.lastVisit) >= 5*time.Minute {
 		t.lastVisit = time.Now()
 		return true
 	}
@@ -70,7 +70,7 @@ func (t *Travelling) returnToTravelling(doc *goquery.Document) (*goquery.Documen
 	if err != nil {
 		return doc, err
 	}
-	if navigation.IsMainPage(doc){
+	if navigation.IsMainPage(doc) {
 		return navigation.GoToFirstMenuLink(doc, resources.HtmlTravellingButton)
 	}
 	return doc, navigation.ErrNotFound

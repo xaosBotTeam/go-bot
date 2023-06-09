@@ -2,7 +2,6 @@ package task_manager
 
 import "sync"
 
-
 func NewUpdateDetector() *UpdateDetector {
 	return &UpdateDetector{
 		mx: sync.RWMutex{},
@@ -10,13 +9,12 @@ func NewUpdateDetector() *UpdateDetector {
 	}
 }
 
-
 type UpdateDetector struct {
 	mx sync.RWMutex
-	m map[int]bool
+	m  map[int]bool
 }
 
-func (u *UpdateDetector) Load(key int) (bool) {
+func (u *UpdateDetector) Load(key int) bool {
 	u.mx.RLock()
 	val := u.m[key]
 	u.mx.RUnlock()
@@ -29,11 +27,8 @@ func (u *UpdateDetector) Store(key int, val bool) {
 	u.mx.Unlock()
 }
 
-
 func (u *UpdateDetector) Delete(key int) {
 	u.mx.Lock()
 	delete(u.m, key)
 	u.mx.Unlock()
 }
-
-

@@ -9,14 +9,13 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/status"
 )
 
-
 type Abstract interface {
 	Do(account.Account, status.Status) error
 }
 
 func testAbstractTask(testTask Abstract) error {
 	testAcc := account.Account{
-		URL: os.Getenv("XAOSBOT_TEST_ACC_URL"),
+		URL:   os.Getenv("XAOSBOT_TEST_ACC_URL"),
 		Owner: 0,
 	}
 	return testTask.Do(testAcc, status.Status{})

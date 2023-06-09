@@ -70,7 +70,7 @@ func (a *AccountStorage) GetAll() (map[int]account.Account, error) {
 func (a *AccountStorage) GetById(id int) (account.Account, error) {
 	var (
 		ownerId int
-		url            string
+		url     string
 	)
 	row := a.db.QueryRow(context.Background(), fmt.Sprintf(`SELECT owner_id, url FROM %s WHERE id = %d`, a.table, id))
 	err := row.Scan(&ownerId, &url)

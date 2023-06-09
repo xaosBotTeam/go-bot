@@ -32,7 +32,7 @@ func UpdateTasksWithStatus(tasks map[task.Type]AbstractTask, configuration model
 	} else {
 		delete(tasks, task.ArenaBoostingTask)
 	}
-	
+
 	if configuration.OpenChests {
 		tasks[task.OpenChests] = task.NewChests()
 	} else {

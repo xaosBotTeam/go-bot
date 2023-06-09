@@ -64,18 +64,18 @@ func (t *TaskManager) initAccount(id int) error {
 	if err == pgx.ErrNoRows {
 		err = t.statusStorage.Add(id, models.Status{})
 		if err != nil {
-            return err
-        }
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
 
 	t.update.Store(id, false)
-	t.collectors[id] = []AbstractCollector {
+	t.collectors[id] = []AbstractCollector{
 		collector.NewEnergyLimit(),
-        collector.NewGameId(),
-        collector.NewNickname(),
-    }
+		collector.NewGameId(),
+		collector.NewNickname(),
+	}
 	return nil
 }
 
@@ -196,7 +196,7 @@ func (t *TaskManager) servingLoop(id int, stop chan bool) {
 	tasks := StatusToTasks(configuration)
 	for {
 		select {
-		case isStopped := <- t.stoppers[id]:
+		case isStopped := <-t.stoppers[id]:
 			if isStopped {
 				return
 			}
@@ -238,7 +238,7 @@ func (t *TaskManager) servingLoop(id int, stop chan bool) {
 				log.Printf("ERR: Task Manager: %s", err.Error())
 			}
 			tasks = UpdateTasksWithStatus(tasks, configuration)
-			
+
 			if t.update.Load(id) {
 				t.update.Store(id, false)
 			}

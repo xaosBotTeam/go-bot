@@ -31,7 +31,7 @@ func InitRoutes(app *fiber.App, controller *handler.BotController) {
 	accountApi.Get("/:id", controller.GetAccountById)
 	accountApi.Post("/", controller.AddAccount)
 	accountApi.Delete("/:id", controller.DeleteAccount)
-	
+
 	statusApi := app.Group("/status")
 	statusApi.Get("/", controller.GetAllStatuses)
 	statusApi.Get("/:id", controller.GetStatus)

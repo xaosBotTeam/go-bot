@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-
 var ErrNotFound = errors.New("item not found")
 var ErrEnergyEmpty = errors.New("energy is over")
 

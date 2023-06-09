@@ -15,13 +15,12 @@ func NewChests() *Chests {
 	return &Chests{lastSync: time.Time{}}
 }
 
-
 type Chests struct {
 	lastSync time.Time
 }
 
 func (c *Chests) CheckCondition() bool {
-	if time.Since(c.lastSync) >= 240 * time.Minute {
+	if time.Since(c.lastSync) >= 240*time.Minute {
 		c.lastSync = time.Now()
 		return true
 	}
@@ -30,7 +29,7 @@ func (c *Chests) CheckCondition() bool {
 
 func (c *Chests) Do(acc account.Account, _ status.Status) error {
 	doc, err := navigation.GetPage(acc.URL)
-	
+
 	if err != nil {
 		return err
 	}
@@ -55,14 +54,13 @@ func (c *Chests) fixErrors(doc *goquery.Document, err error) (*goquery.Document,
 	if err == navigation.ErrNotFound {
 		return doc, true, nil
 	}
-	
+
 	if navigation.IsTopTitleContains(doc, resources.HtmlBagButton) {
 		return doc, false, err
 	}
-	
+
 	return doc, true, ErrUB
 }
-
 
 func (c *Chests) IsPersistent() bool {
 	return true
@@ -72,4 +70,3 @@ func (c *Chests) RemoveFromStatus(configuration config.Config) config.Config {
 	configuration.OpenChests = false
 	return configuration
 }
-

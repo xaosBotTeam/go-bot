@@ -21,7 +21,6 @@ func New(service *task_manager.TaskManager) *BotController {
 	return &BotController{service: service}
 }
 
-
 func (b *BotController) newReply() map[string]string {
 	reply := make(map[string]string)
 	reply["data"] = ""
@@ -64,14 +63,14 @@ func (b *BotController) UpdateConfig(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusOK)
 }
 
-//	@Summary		Get config by id
-//	@Description	get config by ID
-//	@ID				get-config-by-id
+// @Summary		Get config by id
+// @Description	get config by ID
+// @ID				get-config-by-id
 //
-//	@Tags 			Config
-//	@Produce		json
-//	@Param			id path int false "account id"
-//	@Router			/config/{id} [get]
+// @Tags 			Config
+// @Produce		json
+// @Param			id path int false "account id"
+// @Router			/config/{id} [get]
 func (b *BotController) GetConfigById(c *fiber.Ctx) error {
 	reply := b.newReply()
 	id, err := strconv.Atoi(c.Params("id"))
@@ -97,13 +96,13 @@ func (b *BotController) GetConfigById(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Get all configs
-//	@Description	get all configs
-//	@ID				get-all-configs
+// @Summary		Get all configs
+// @Description	get all configs
+// @ID				get-all-configs
 //
-//	@Tags			Config
-//	@Produce		json
-//	@Router			/config/ [get]
+// @Tags			Config
+// @Produce		json
+// @Router			/config/ [get]
 func (b *BotController) GetAllConfigs(c *fiber.Ctx) error {
 	reply := b.newReply()
 	statuses, err := b.service.AllConfigs()
@@ -114,20 +113,20 @@ func (b *BotController) GetAllConfigs(c *fiber.Ctx) error {
 		reply["error"] = "Something doesn't work"
 		return c.Status(fiber.StatusInternalServerError).JSON(reply)
 	}
-	
+
 	jsonStr, err := json.Marshal(statuses)
 	reply["data"] = string(jsonStr)
-	
+
 	return c.JSON(reply)
 }
 
-//	@Summary		Add new game account
-//	@ID				add-new-game-account
+// @Summary		Add new game account
+// @ID				add-new-game-account
 //
-//	@Tags 			Account
-//	@Produce		json
-//	@Param			account	body account.Account true "account url"
-//	@Router			/account/ [post]
+// @Tags 			Account
+// @Produce		json
+// @Param			account	body account.Account true "account url"
+// @Router			/account/ [post]
 func (b *BotController) AddAccount(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	var acc account.Account
@@ -146,13 +145,13 @@ func (b *BotController) AddAccount(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Get game account by id
-//	@ID				get-account-by-id
+// @Summary		Get game account by id
+// @ID				get-account-by-id
 //
-//	@Tags 			Account
-//	@Produce		json
-//	@Param			id	path int true "account id"
-//	@Router			/account/{id} [get]
+// @Tags 			Account
+// @Produce		json
+// @Param			id	path int true "account id"
+// @Router			/account/{id} [get]
 func (b *BotController) GetAccountById(c *fiber.Ctx) error {
 	reply := b.newReply()
 	id, err := strconv.Atoi(c.Params("id"))
@@ -178,12 +177,12 @@ func (b *BotController) GetAccountById(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Get all game accounts
-//	@ID				get-all-accounts
+// @Summary		Get all game accounts
+// @ID				get-all-accounts
 //
-//	@Tags 			Account
-//	@Produce		json
-//	@Router			/account/ [get]
+// @Tags 			Account
+// @Produce		json
+// @Router			/account/ [get]
 func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 	reply := b.newReply()
 	accounts, err := b.service.GetAllAccounts()
@@ -203,13 +202,13 @@ func (b *BotController) GetAllAccounts(c *fiber.Ctx) error {
 	return c.JSON(reply)
 }
 
-//	@Summary		Delete game account by id
-//	@ID				delete-account-by-id
+// @Summary		Delete game account by id
+// @ID				delete-account-by-id
 //
-//	@Tags 			Account
-//	@Produce		json
-//	@Param			id	path int true "account id"
-//	@Router			/account/{id} [delete]
+// @Tags 			Account
+// @Produce		json
+// @Param			id	path int true "account id"
+// @Router			/account/{id} [delete]
 func (b *BotController) DeleteAccount(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -225,7 +224,6 @@ func (b *BotController) DeleteAccount(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusOK)
 }
-
 
 //	@Summary		Update config for all
 //	@Description	get config for all

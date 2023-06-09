@@ -8,8 +8,6 @@ import (
 	"github.com/xaosBotTeam/go-shared-models/config"
 )
 
-
-
 func NewConfigStorage(connString string) (*DbConfigStorage, error) {
 	conn, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
