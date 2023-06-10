@@ -1,7 +1,6 @@
 package route
 
 import (
-	_ "go-bot/docs"
 	"go-bot/handler"
 	"net/http"
 
