@@ -23,11 +23,11 @@ jobs:
     - name: Install swag
       run: go install github.com/swaggo/swag/cmd/swag@latest
 
-    - name: Install dependencies
-      run: go get .
-
     - name: Generate swagger docs
       run: $GOPATH/bin/swag init --pd
+
+    - name: Install dependencies
+      run: go get .
 
     - name: Build
       run: go build -v ./...
