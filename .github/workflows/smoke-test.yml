@@ -24,6 +24,7 @@ jobs:
       run: go install github.com/swaggo/swag/cmd/swag@latest
 
     - name: Generate swagger docs
+      uses: actions/setup-go@v3
       run: $GOPATH/bin/swag init --pd
 
     - name: Install dependencies
