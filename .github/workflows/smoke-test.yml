@@ -24,7 +24,7 @@ jobs:
       run: go install github.com/swaggo/swag/cmd/swag@latest
 
     - name: Generate swagger docs
-      run: $GOPATH/bin/swag init --pd
+      run: (go env | grep GOPATH | awk -F '=' '{print $2}' | tr -d "\"")/bin/swag init --pd
 
     - name: Install dependencies
       run: go get .
