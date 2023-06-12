@@ -14,9 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19
-    - run: go install github.com/swaggo/swag/cmd/swag@latest
-    - run: $GOBIN/swag init --pd
-    - run: go build -v
+
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+
+    - name: Generate swagger docs
+      run: $(go env | grep GOPATH | awk -F '=' '{print $2}' | tr -d "\"")/bin/swag init --pd
+
+    - name: Install dependencies
+      run: go get .
+
+    - name: Build
+      run: go build -v ./...
